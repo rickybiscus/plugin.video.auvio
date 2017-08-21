@@ -298,35 +298,21 @@ def get_medias_list(items,params):
         listing.append(link_next)
   
     return listing
-    
-
-@common.plugin.action()
-def stream_live(params):
-    lid = params.get('live_id');
-    common.plugin.log("STREAM LIVE#" + str(lid))
-    url = api.get_live_video_url(lid)
-
-    if not url:
-        popup("media file not found")
-        common.plugin.log_error("media file not found")
-        return
-
-    liz = xbmcgui.ListItem(path=url)
-    return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
 
 @common.plugin.action()
 def stream_radio(params):
+
     radio_slug = params.get('radio_slug')
     radio_config = api.get_live_radio_config(radio_slug)
-    streams = radio_config.get('flashAudioUrls')
-    common.plugin.log('streams')
-    common.plugin.log(streams)
-    stream = streams[0] #get first one (TO FIX better way to choose it ?)
-    url = stream.get('url')
+    streams = radio_config.get('audioUrls',None)
+    
+    if streams:
+        stream = streams[0]  #get first one (TO FIX better way to choose it ?)
+        url = stream.get('url')
 
     if not url:
-        popup("media file not found")
-        common.plugin.log_error("media file not found")
+        popup("radio stream url not found")
+        common.plugin.log_error("radio stream url not found")
         return
     
     common.plugin.log("stream radio url: %s" % url)
