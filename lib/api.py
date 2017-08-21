@@ -590,6 +590,7 @@ Some API endpoints :
 * api/media/streaming?streamname=3D
 * api/article/json?method=getChrono
 * embed/d/ajax/refresh?id=70993 - refresh live informations
+* api/partner/generic/live/planninglist?target_site=media&origin_site=media&category_id=0&start_date=&offset=0&limit=10&v=7&partner_key=XXX - live streams (JSON)
 
 LIVE 
 
