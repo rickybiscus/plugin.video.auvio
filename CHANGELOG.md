@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.0.0
+Released 23 August 2017
+* Now uses almost always the official API
+* updated SimplePlugin to v2.3.1
+* Fixed broken menus
+* Better menus structure
+* Addon settings
+
 ## v2.0.4
 Released 5 October 2016
 * Cache (permanently) starred items so we can know everywhere if an item is starred or not without querying it

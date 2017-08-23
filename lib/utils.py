@@ -5,10 +5,14 @@ import os
 import sys
 import xbmc
 import xbmcaddon
+import json
 import datetime
 import time
 import dateutil.parser
+import dateutil.tz
 import urllib2
+import urlparse
+import socket
 
 # Add the /lib folder to sys
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
@@ -20,12 +24,57 @@ import api
 def request_url(url, referer='http://www.google.com'):
     common.plugin.log('request_url : %s' % url)
     req = urllib2.Request(url)
-    req.addheaders = [('Referer', referer),
-            ('Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.3) Gecko/20100101 Firefox/11.0 ( .NET CLR 3.5.30729)')]
-    response = urllib2.urlopen(req)
-    data = response.read()
-    response.close()
+    req.addheaders = [('Referer', referer),('Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.3) Gecko/20100101 Firefox/11.0 ( .NET CLR 3.5.30729)')]
+
+    try:
+        response = urllib2.urlopen(req)
+        data = response.read()
+        response.close()
+    except urllib2.URLError as e:
+        common.plugin.log_error("Remote request error for URL %s: %r" % (url,e))
+        return
+    except socket.timeout, e:
+        common.plugin.log_error("Remote request error for URL %s: %r" % (url,e))
+        return
+
     return data
+
+def now():
+  return datetime.datetime.now(dateutil.tz.tzlocal())
+
+def is_live_media(node):
+
+    start_date = node.get('start_date',None)
+    end_date = node.get('end_date',None)
+    
+    if not start_date or not end_date:
+        common.plugin.log_error('utils.is_live_media() : missing start_date or end_date')
+        return
+
+    now_datetime = now()
+    start_date = dateutil.parser.parse(start_date)
+    end_date = dateutil.parser.parse(end_date)
+
+    return (start_date <= now_datetime <= end_date)
+
+def get_stream_start_date_formatted(start_date):
+    
+    if start_date is None:
+        common.plugin.log_error('utils.is_live_media() : missing start_date')
+        return None
+
+    now_datetime = now()
+    start_date = dateutil.parser.parse(start_date)
+    
+    formatted_date = start_date.strftime(xbmc.getRegion('dateshort'))
+    formatted_time = start_date.strftime(xbmc.getRegion('time'))
+    
+    if now_datetime.date() != start_date.date():
+        formatted_datetime = formatted_date + " - " + formatted_time
+    else:
+        formatted_datetime = formatted_time
+
+    return formatted_datetime
 
 def datetime_W3C_to_kodi(input):
     if input is None:
@@ -36,120 +85,32 @@ def datetime_W3C_to_kodi(input):
     date_obj = dateutil.parser.parse(input)
     return date_obj.strftime('%d.%m.%Y')
 
-def timestamp_to_kodi(timestamp):
-    """
-    Converts a timestamp to kodi format (01.12.2008)
-    """
-    date_obj = datetime.datetime.fromtimestamp(int(timestamp))
-    return date_obj.strftime('%d.%m.%Y')
-
 def datetime_to_W3C(input = None):
     """
-    Converts a date string from eg. 2016-09-12T13:00:00+02:00 to eg. '12.09.2016'
-    """
-    if not input:
-        input = datetime.datetime.now()
-    return input.isoformat()
-
-def convert_duration_str(input):
-    """
-    Converts a date string from eg. '5min 35s' to eg. '6'
+    Converts a date string input to an ISO-8601 (W3C) string
+    If no input is set, get current datetime
     """
     
     if not input:
-        common.plugin.log_error('utils.convert_duration_str() : no input')
-        return
-    
-    seconds = 0
-    try:
-        matches = re.search("(\d+)min (\d+)s",input)
-        if matches:
-            m = int(matches.groups()[0]) * 60
-            s = int(matches.groups()[1])
-            seconds = m + s
-    except:
-        common.plugin.log_error('utils.convert_duration_str() : error converting duration: ' + str(input))
-        pass
-    
-    return seconds
+        date = datetime.datetime.now()
+    else:
+        date = dateutil.parser.parse(input)
 
-def get_srcset_image(srcSet,key=1):
-    
+    return date.isoformat()
+
+def convert_podcast_duration(time_str):
     """
-    Returns image URL from a srcSet (from API or scraper)
+    converts H:MM:SS to seconds
     """
     
-    #keys : 0=SD, 1=MD, 2=HD
-    
-    images = []
-    
-    if not srcSet:
-        common.plugin.log_error('utils.get_srcset_image() : no input')
-        return
-    
-    #make sure this is a list
-    if not isinstance(srcSet, list):
-        srcSet = srcSet.split(',')
+    h, m, s = time_str.split(':')
+    return int(h) * 3600 + int(m) * 60 + int(s)
 
-    for single_img_str in srcSet:
-        
-        img_split = single_img_str.strip().split(' ')
+def get_media_id_from_url(url):
+    parsed = urlparse.urlparse(url)
+    args = urlparse.parse_qs(parsed.query)
 
-        if len(img_split) < 2:
-            continue    
-            
-        img = {
-            'url':  img_split[0],
-            'size': img_split[1]
-        }
-        
-        images.append(img)
+    if not 'id' in args:
+        return False
 
-    #get size
-    for i,image in enumerate(images):
-        if i == key:
-            return image.get('url')
-
-def get_live_embed_url(lid):
-    return common.auvio_url + 'embed/direct?id=%s&autoplay=1' % lid
-
-def get_channel_attr(id,attr):
-    channels = api.get_channels()
-    
-    for channel in channels:
-        channel_id = channel.get('id',None)
-        if id == channel_id:
-            return channel.get(attr,None)
-        
-def media_label(title=None,subtitle=None,channel_slugs=None):
-    labels = []
-    label = ''
-    
-    if title:
-        title = '[B]' + title +'[/B]'
-        
-    if subtitle:
-        title = title + ' - ' + subtitle
-        
-    labels.append(title)
-        
-    if channel_slugs:
-        channels_names = []
-        if not isinstance(channel_slugs, list):
-            channel_slugs = [channel_slugs]
-            
-        for channel_slug in channel_slugs:
-            channel = api.get_single_channel_by_name(channel_slug)
-            if channel and ('name' in channel):
-                channel_name = channel.get('name')
-            else:
-                channel_name = channel_slug
-
-            channels_names.append(channel_name)
-        channel_str = ', '.join(channels_names)
-        labels.append(channel_str)
-      
-    labels = filter(None, labels)
-    label = ' | '.join(labels)
-    
-    return label
+    return args['id'][0]

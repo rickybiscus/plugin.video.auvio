@@ -29,15 +29,11 @@ auvio_url = 'http://www.rtbf.be/auvio/'
 auvio_url_api = auvio_url + "api/"
 
 #in minutes
-cachetime_categories = 60 * 12
-cachetime_channels = 60 * 12
-cachetime_shows = 60 * 12
+cachetime_categories = 60 * 24
+cachetime_channels = 60 * 24
+cachetime_programs = 60 * 24
+cachetime_media_data = 60 * 24
 cachetime_medias_recent = 15
-cachetime_media_data = 5
-cachetime_radio_config = 60
-cachetime_live = 5
-cachetime_category_medias = 15
-cachetime_channel_medias = 2
 
 def popup(text, time=5000, image=None):
     title = plugin.addon.getAddonInfo('name')

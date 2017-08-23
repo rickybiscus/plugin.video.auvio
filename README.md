@@ -6,9 +6,8 @@ Contributions are welcome:
 https://github.com/rickybiscus/plugin.video.auvio
 
 ## Features
-* Browse content by channels, categories, or shows
-* Stream live video
-* Stream radios
+* Main menu : 'En direct', 'Chaînes', 'Émissions', 'Catégories', 'Sélection'
+* Stream live videos and radios, video replays and audio podcasts
 
 ## Installation
 * Navigate to your `.kodi/addons/` folder
@@ -16,8 +15,7 @@ https://github.com/rickybiscus/plugin.video.auvio
 * (Re)start Kodi.
 
 ## TODO
-* Improve live video streaming
-* Try to work more with the API and less with the scrapper ?
+* FIX live video streaming
 
 ## License
 See the `LICENSE` file.
