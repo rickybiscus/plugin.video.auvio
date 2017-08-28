@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.1.0
+Released 28 August 2017
+* Download medias
+* Python Slugify 1.2.4 (for file names)
+
 ## v3.0.0
 Released 23 August 2017
 * Now uses almost always the official API

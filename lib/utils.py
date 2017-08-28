@@ -106,11 +106,14 @@ def convert_podcast_duration(time_str):
     h, m, s = time_str.split(':')
     return int(h) * 3600 + int(m) * 60 + int(s)
 
-def get_media_id_from_url(url):
+def get_url_arg(url,key,single = True):
     parsed = urlparse.urlparse(url)
     args = urlparse.parse_qs(parsed.query)
 
-    if not 'id' in args:
+    if not key in args:
         return False
 
-    return args['id'][0]
+    if single:
+        return args[key][0]
+    else:
+        return args[key]

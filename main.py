@@ -13,6 +13,9 @@ import xbmcgui
 import json
 import re
 import math
+import urllib2
+import urlparse
+import time
 
 # Add the /lib folder to sys
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
@@ -23,16 +26,11 @@ import scraper
 import api
 import utils
 
+from simpleplugin import Addon
+
 # initialize_gettext
 #_ = common.plugin.initialize_gettext()
-
-
-
-def popup(text, time=5000, image=None):
-    title = common.plugin.addon.getAddonInfo('name')
-    icon = common.plugin.addon.getAddonInfo('icon')
-    xbmc.executebuiltin('Notification(%s, %s, %d, %s)' % (title, text,time, icon))
-      
+ 
 @common.plugin.action()
 def root(params):
     
@@ -300,6 +298,111 @@ def stream_url(params):
     liz = xbmcgui.ListItem(path=url)
     return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
 
+@common.plugin.action()
+def download_media(params):
+    
+    from slugify import slugify
+    
+    title=  params.get('title');
+    url=    params.get('url');
+    
+    #validate path
+    download_folder = Addon().get_setting('download_folder')
+    
+    if not download_folder:
+        common.popup("Veuillez configurer un répertoire de téléchargement dans les paramètres du plugin")
+        common.plugin.log_error("download_media: No directory set")
+        return False
+
+    if not url:
+        common.popup("Impossible de télécharger ce média")
+        plugin.log_error("download_media: Missing URL")
+        return False
+
+    #filename
+    remote_path = urlparse.urlparse(url).path #full path
+    remote_file = url.rsplit('/', 1)[-1] #only what's after the last '/'
+    remote_filename = os.path.splitext(remote_file)[0]
+    remote_ext = os.path.splitext(remote_file)[1]
+    
+    file_name = slugify(title) + remote_ext
+    file_path = xbmc.makeLegalFilename(os.path.join(download_folder, file_name))
+    file_path = urllib2.unquote(file_path)
+
+    common.plugin.log('download_media - filename: %s from %s' % (file_name,url))
+    
+    # Overwrite existing file?
+    if os.path.isfile(file_path):
+        
+        do_override = common.ask('Le fichier [B]%s[/B] existe déjà.  Écraser ?' % (file_name)) 
+
+        if not do_override:
+            return
+
+    # Download
+    size = 1024 * 1024
+    start = time.clock()
+    f = open(file_path, 'wb')
+    u = urllib2.urlopen(url)
+    bytes_so_far = 0
+    error = False
+
+    # Get file size
+    try:
+        total_size = u.info().getheader('Content-Length').strip()
+        total_size = int(total_size)
+    except AttributeError:
+        total_size = 0 # a response doesn't always include the "Content-Length" header
+        
+    if total_size < 1:
+        common.popup("Erreur lors du téléchargement: Impossible de déterminer la taille du fichier.")
+        return False
+    
+    # Progress dialog
+    progressdialog = xbmcgui.DialogProgress()
+    progressdialog.create("Téléchargement du média...") #Title
+
+    while True:
+        
+        # Aborded by user
+        if (progressdialog.iscanceled()):
+            error = True
+            break
+        
+        try:
+            
+            buff = u.read(size)
+            if not buff:
+                break
+            else:
+                bytes_so_far += len(buff)
+                f.write(buff)
+
+                percent = min(100 * bytes_so_far / total_size, 100)
+                speed_str = str(int((bytes_so_far / 1024) / (time.clock() - start))) + ' KB/s'
+                percent_str = str(percent) + '%'
+                progressdialog.update(percent, file_name,percent_str,speed_str)
+                    
+        except Exception, e:
+            error = True
+            break
+            
+    f.close()
+            
+    if error:
+        common.popup("Erreur lors du téléchargement.")
+    else:
+        progressdialog.update(100, "Terminé!")
+        xbmc.sleep(1000)
+        
+    progressdialog.close()
+
+def context_action_download(title,url):
+    return (
+        'Télécharger', 
+        'XBMC.RunPlugin(%s)' % common.plugin.get_url(action='download_media',title=title,url=url)
+    )
+
 def channel_to_kodi_item(node):
     """
     Convert a channel API object to a kodi list item
@@ -398,6 +501,8 @@ def program_to_kodi_item(node):
     return li
 
 def media_to_kodi_item(node,args={}):
+    
+    context_actions = [] #context menu actions
 
     #build label
     title = node.get('title','').encode('utf-8').strip()
@@ -411,7 +516,7 @@ def media_to_kodi_item(node,args={}):
         if channel:
             label = "[B]{0}[/B] - {1}".format(channel,label)
     
-    if args.get('subtitle',True) and subtitle:
+    if subtitle:
         label = "{0} - [I]{1}[/I]".format(label,subtitle)
 
     if node.get('type') == 'livevideo':
@@ -420,9 +525,7 @@ def media_to_kodi_item(node,args={}):
         else:
             stream_start = utils.get_stream_start_date_formatted(node.get('start_date',None))
             label += ' [COLOR red]' + stream_start + '[/COLOR]'
-        
-    
-        
+
     #kodi type
     media_type = node.get('type')
     
@@ -465,6 +568,15 @@ def media_to_kodi_item(node,args={}):
     elif media_type=='video' or media_type=='audio':
         if stream_node:
             media_url = stream_node.get('url','').encode('utf-8').strip()
+        if media_url: #Download
+            
+            if subtitle:
+                file_title = "%s - %s" % (title,subtitle)
+            else:
+                file_title = title
+
+            action_download =  context_action_download(file_title,media_url)
+            context_actions.append(action_download)
 
     li = {
         'label':    label,
@@ -474,16 +586,29 @@ def media_to_kodi_item(node,args={}):
         'info': {
             kodi_type: infos
         },
-        'is_playable':  True
+        'is_playable':  True,
+        'context_menu': context_actions
     }
 
     return li
 
 def podcast_to_kodi_item(node,args={}):
+    
+    context_actions = [] #context menu actions
+    
+    #media URL
+    media_url = node.get('stream_url','')
+    
+    #Download
+    if media_url:
+        file_title = node.get('title')
+        action_download =  context_action_download(file_title,media_url)
+        context_actions.append(action_download)
+    
     li = {
         'label':    node.get('title'),
         'thumb':    node.get('image',''),
-        'url':      common.plugin.get_url(action='stream_url',url=node.get('stream_url','')),
+        'url':      common.plugin.get_url(action='stream_url',url=media_url),
         'info': {
             'music': {
                 'date':         node.get('pubdate'),
@@ -491,7 +616,8 @@ def podcast_to_kodi_item(node,args={}):
                 'duration':     node.get('duration',''),
             }
         },
-        'is_playable':  True
+        'is_playable':  True,
+        'context_menu': context_actions
     }
 
     return li

@@ -15,10 +15,10 @@ https://github.com/rickybiscus/plugin.video.auvio
 * (Re)start Kodi.
 
 ## TODO
-* FIX live video streaming
 
 ## License
 See the `LICENSE` file.
 
 Additional copyright notices:
 * [SimplePlugin](https://github.com/romanvm/script.module.simpleplugin/stargazers) by romanvm
+* [Python Slugify](https://github.com/un33k/python-slugify) by un33k

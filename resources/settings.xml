@@ -7,5 +7,7 @@
         <setting label="Mot de passe" id="password" type="text" option="hidden"/>
         <setting label="Affichage" type="lsep" />
         <setting label="Médias par page" id="medias_per_page" type="labelenum"  default="25" values="10|25|50|100"/>
+        <setting label="Téléchargement" type="lsep" />
+        <setting label="Répertoire" id="download_folder"  type="folder"  source="auto" option="writeable"/>
     </category>
 </settings>

@@ -74,7 +74,7 @@ def get_channel_recent_medias(id,page=1):
 
     for html_node in html_nodes:
         link_url = html_node['href']
-        media_id = utils.get_media_id_from_url(link_url)
+        media_id = utils.get_url_arg(link_url,'id')
 
         if not media_id:
             continue
@@ -154,7 +154,7 @@ def get_selection():
 
     for html_node in html_nodes:
         link_url = html_node['href']
-        media_id = utils.get_media_id_from_url(link_url)
+        media_id = utils.get_url_arg(link_url,'id')
         
         item = api.get_media_details(media_id)
         

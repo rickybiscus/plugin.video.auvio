@@ -39,3 +39,8 @@ def popup(text, time=5000, image=None):
     title = plugin.addon.getAddonInfo('name')
     icon = plugin.addon.getAddonInfo('icon')
     xbmc.executebuiltin('Notification(%s, %s, %d, %s)' % (title, text,time, icon))
+    
+def ask(question):
+    dialog = xbmcgui.Dialog()
+    title = plugin.addon.getAddonInfo('name')
+    return dialog.yesno(title, question)
