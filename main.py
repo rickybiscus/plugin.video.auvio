@@ -414,10 +414,21 @@ def channel_to_kodi_item(node):
     channel_type = node.get('type',None)
     channel_url = ''
     
-    if channel_type == 'webradio':
+    has_submenu = True
+
+    channel_url = node.get('links',{}).get('auvio_channel',None)
+    channel_id = utils.get_url_arg(channel_url,'id')
+
+    if channel_id != str(node.get('id')):
+        has_submenu = False
+            
+    if not has_submenu and (channel_type == 'webradio' or channel_type == 'radio'):
+        
         li = radio_stream_to_kodi_item(node)
         li['label'] += ' [COLOR yellow]direct[/COLOR]'
+        
     else:
+        
         channel_url = common.plugin.get_url(action='menu_single_channel',id=node.get('id'))
 
         li = {

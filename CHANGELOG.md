@@ -4,6 +4,7 @@
 Released 28 August 2017
 * Download medias
 * Python Slugify 1.2.4 (for file names)
+* Do not show channel submenu if channel does not have its own auvio channel
 
 ## v3.0.0
 Released 23 August 2017
