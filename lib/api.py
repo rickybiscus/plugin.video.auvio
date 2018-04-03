@@ -26,6 +26,7 @@ from simpleplugin import Addon
 import common
 import utils
 
+
 def get_base_datas():
     """
     Fetch the header nav datas from API and clean it (menu items)
@@ -33,9 +34,11 @@ def get_base_datas():
     
     global main_data
     if main_data is None:
-        
-        site = 'media' # 'data-site' attr from body
-        url = common.rtbf_url + 'news/api/menu?site=%s' % site 
+
+        url = common.rtbf_url + 'news/api/menu'
+        url_params = {
+            'site':  'media', # 'data-site' attr from body
+        }
         
         progressdialog = xbmcgui.DialogProgress()
         progressdialog.create(common.plugin.addon.getAddonInfo('name'))
@@ -45,7 +48,7 @@ def get_base_datas():
         
         try:
             
-            json_data = utils.request_url(url)
+            json_data = utils.request_url(url,url_params)
             if not json_data:
                 return
             
@@ -101,20 +104,6 @@ def clean_base_datas(node):
     else:
         return new_node
 
-def generic_api_url(module,action,args={}):
-    """
-    See https://www.rtbf.be/api/partner/generic?partner_key=XXX
-    """
-
-    args['partner_key'] = common.rtbf_api_key #api key
-    args['v']           = 7 #api version
-
-    args_str = urllib.urlencode(args)
-    
-    url = common.rtbf_url_api + 'partner/generic/{0}/{1}?{2}'.format(module,action,args_str)
-    
-    return url
-    
 
 @common.plugin.cached(common.cachetime_categories)
 def get_categories():
@@ -164,8 +153,13 @@ def get_channels():
 
         items = []
 
-        url = generic_api_url('epg','channellist')
-        json_data = utils.request_url(url)
+        url = common.cryo_base_url + 'epg/channellist'
+        url_params = {
+            'partner_key':  common.rtbf_api_key,
+            'v':            7,
+        }
+    
+        json_data = utils.request_url(url,url_params)
         if not json_data:
             return
         
@@ -192,17 +186,19 @@ def get_media_details(id):
     """
     
     common.plugin.log('get_media_details')
-    
-    url_args = {
+
+    url = common.cryo_base_url + 'media/objectdetail'
+    url_params = {
+        'partner_key':  common.rtbf_api_key,
+        'v':            7,
         'target_site':  'mediaz',
-        'id': id,
+        'id':           id,
     }
-    url = generic_api_url('media','objectdetail',url_args)
 
     common.plugin.log("get_media_details for ID:%s" % (id))
 
     try:
-        json_data = utils.request_url(url)
+        json_data = utils.request_url(url,url_params)
         if not json_data:
             return
  
@@ -243,19 +239,20 @@ def get_live_videos(page=1):
     items = []
     
     limit = int(Addon().get_setting('medias_per_page'))
-    
-    url_args = {
+
+    url = common.cryo_base_url + 'live/planninglist'
+    url_params = {
+        'partner_key':  common.rtbf_api_key,
+        'v':            7,
         'target_site':  'media',
         'origin_site':  'media',
         'category_id':  0,
         'start_date':   '',
         'offset':       (page - 1) * limit,
         'limit':        limit,
-        
     }
-    url = generic_api_url('live','planninglist',url_args)
-    
-    json_data = utils.request_url(url)
+
+    json_data = utils.request_url(url,url_params)
     if not json_data:
         return
     
@@ -269,14 +266,15 @@ def get_channel_current_live(channel_slug):
 
     items = []
     
-    url_args = {
+    url = common.cryo_base_url + 'live/planningcurrent'
+    url_params = {
+        'partner_key':  common.rtbf_api_key,
+        'v':            7,
         'target_site':  'mediaz',
         'channel':      channel_slug
     }
-    
-    url = generic_api_url('live','planningcurrent',url_args)
-    
-    json_data = utils.request_url(url)
+
+    json_data = utils.request_url(url,url_params)
     if not json_data:
         return
     
@@ -289,17 +287,18 @@ def get_category_medias(id,page=1):
     items = []
     
     limit = int(Addon().get_setting('medias_per_page'))
-    
-    url_args = {
+
+    url = common.cryo_base_url + 'media/objectlist'
+    url_params = {
+        'partner_key':  common.rtbf_api_key,
+        'v':            7,
         'target_site':  'mediaz',
         'category_id':  id,
         'offset':       (page - 1) * limit,
         'limit':        limit,
-        
     }
-    url = generic_api_url('media','objectlist',url_args)
-    
-    json_data = utils.request_url(url)
+
+    json_data = utils.request_url(url,url_params)
     if not json_data:
         return
     
@@ -318,16 +317,17 @@ def get_program_medias(id,page=1):
     
     limit = int(Addon().get_setting('medias_per_page'))
     
-    url_args = {
+    url = common.cryo_base_url + 'media/objectlist'
+    url_params = {
+        'partner_key':  common.rtbf_api_key,
+        'v':            7,
         'program_id':   id,
         'target_site':  'mediaz',
         'offset':       (page - 1) * limit,
         'limit':        limit,
-        
     }
-    url = generic_api_url('media','objectlist',url_args)
-    
-    json_data = utils.request_url(url)
+
+    json_data = utils.request_url(url,url_params)
     if not json_data:
         return
     
