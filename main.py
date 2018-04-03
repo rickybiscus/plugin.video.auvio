@@ -39,27 +39,34 @@ def root(params):
     listing.append({
         'label':    'En direct',
         'url':     common.plugin.get_url(action='list_medias',filter_medias='live_medias_recent'),
-    })  # Item label
+    })
 
     listing.append({
         'label':    'Chaînes',
         'url':      common.plugin.get_url(action='list_channels')
-    })  # Item label
+    })
 
     listing.append({
         'label':    'Émissions',
         'url':      common.plugin.get_url(action='list_programs')
-    })  # Item label
+    })
     
     listing.append({
         'label':    'Catégories',
         'url':      common.plugin.get_url(action='list_categories')
-    })  # Item label
+    })
     
     listing.append({
         'label':    'Sélection',
         'url':      common.plugin.get_url(action='list_selection')
-    })  # Item label
+    })
+    
+    if user_has_account():
+    
+        listing.append({
+            'label':    'Mon Auvio',
+            'url':      common.plugin.get_url(action='list_favorites')
+        })
 
 
     return common.plugin.create_listing(
@@ -172,6 +179,21 @@ def list_selection(params):
     sortable_by = (
         xbmcplugin.SORT_METHOD_LABEL
     )
+
+    return common.plugin.create_listing(
+        listing,
+        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
+        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one. 
+        #cache_to_disk = True, #cache this view to disk.
+        #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
+        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
+        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
+    )
+
+@common.plugin.action()
+def list_favorites(params):
+    
+    listing = []
 
     return common.plugin.create_listing(
         listing,
@@ -664,6 +686,15 @@ def navigate_root():
         'label':    ".. Retour au menu principal",
         'url':      common.plugin.get_url(action='root')
     }
+
+def user_has_account():
+    user_login = Addon().get_setting('email')
+    user_pwd = Addon().get_setting('password')
+    
+    if user_login and user_pwd:
+        return True
+    else:
+        return False
 
 
 
