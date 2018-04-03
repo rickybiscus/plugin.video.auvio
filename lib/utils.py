@@ -10,6 +10,7 @@ import datetime
 import time
 import dateutil.parser
 import dateutil.tz
+import urllib
 import urllib2
 import urlparse
 import socket
@@ -20,11 +21,34 @@ sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.au
 import common
 import api
 
+def parse_dict_args(x, y):
+    # https://stackoverflow.com/a/26853961/782013
+    
+    # python 3.5: z = {**x, **y}
+    
+    z = x.copy()   # start with x's keys and values
+    z.update(y)    # modifies z with y's keys and values & returns None
+    return z
 
-def request_url(url, referer='http://www.google.com'):
+def request_url(url, params={}, headers={}):
+    
+    #URL parameters
+    if (params):
+        params_str = urllib.urlencode(params)
+        url = url + '?' + params_str
+        
+    #request headers
+    headers_defaults = {
+        'Referer':      'https://www.rtbf.be',
+        'user-agent':   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36',
+    }
+    
+    headers = parse_dict_args(headers_defaults,headers)
+    
     common.plugin.log('request_url : %s' % url)
-    req = urllib2.Request(url)
-    req.addheaders = [('Referer', referer),('Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.3) Gecko/20100101 Firefox/11.0 ( .NET CLR 3.5.30729)')]
+    common.plugin.log(headers_defaults)
+
+    req = urllib2.Request(url, headers=headers)
 
     try:
         response = urllib2.urlopen(req)
