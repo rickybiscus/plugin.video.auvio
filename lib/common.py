@@ -26,7 +26,6 @@ rtbf_url = 'http://www.rtbf.be/'
 rtbf_url_api = rtbf_url + "api/"
 rtbf_api_key = '82ed2c5b7df0a9334dfbda21eccd8427'
 auvio_url = 'http://www.rtbf.be/auvio/'
-auvio_url_api = auvio_url + "api/"
 
 #in minutes
 cachetime_categories = 60 * 24
