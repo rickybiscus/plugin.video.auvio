@@ -115,11 +115,10 @@ def get_stream_start_date_formatted(start_date):
 
     return formatted_datetime
 
-def datetime_W3C_to_kodi(input):
-    if input is None:
-        common.plugin.log_error('utils.datetime_W3C_to_kodi() : no input')
+def datetime_W3C_to_kodi(input = None):
+    if not input:
         return None
-    
+
     #CONVERT datetime (ISO9601) to kodi format (01.12.2008)
     date_obj = dateutil.parser.parse(input)
     return date_obj.strftime('%d.%m.%Y')

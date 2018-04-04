@@ -208,7 +208,7 @@ def list_widget_section_items(params):
 
     #BLOCK ITEMS
     for item in blocks_content:
-        li = media_to_kodi_item(item,{'show_channel':False})
+        li = media_to_kodi_item(item)
         listing.append(li)  # Item label
 
     return common.plugin.create_listing(
@@ -518,31 +518,27 @@ def category_to_kodi_item(category):
     }
     return li
 
-def media_to_kodi_item(node,args={}):
-    
+def media_to_kodi_item(node):
+
     context_actions = [] #context menu actions
 
     #build label
     title = node.get('title','').encode('utf-8').strip()
     subtitle = node.get('subtitle','').encode('utf-8').strip()
-    channel_node = node.get('channel',)
+    channel = node.get('channel',{}).get('label','').encode('utf-8').strip()
 
-    label = title
-    
-    if args.get('show_channel',True) and channel_node:
-        channel = channel_node.get('label','').encode('utf-8').strip()
-        if channel:
-            label = "[B]{0}[/B] - {1}".format(channel,label)
-    
+    if channel:
+        title = "[B]{0}[/B] - {1}".format(channel,title)
+
     if subtitle:
-        label = "{0} - [I]{1}[/I]".format(label,subtitle)
+        title = "{0} - [I]{1}[/I]".format(title,subtitle)
 
     if node.get('type') == 'livevideo':
         if utils.is_live_media(node):
-            label += ' [COLOR yellow]direct[/COLOR]'
+            title += ' [COLOR yellow]direct[/COLOR]'
         else:
             stream_start = utils.get_stream_start_date_formatted(node.get('start_date',None))
-            label += ' [COLOR red]' + stream_start + '[/COLOR]'
+            title += ' [COLOR red]' + stream_start + '[/COLOR]'
 
     #kodi type
     media_type = node.get('type')
@@ -552,15 +548,15 @@ def media_to_kodi_item(node,args={}):
     #http://kodi.wiki/view/InfoLabels#ListItem
     
     infos = {
-        'date':         utils.datetime_W3C_to_kodi(node.get('start_date')),
-        #'aired':        utils.datetime_W3C_to_kodi(node.get('start_date')),
-        'count':        node.get('id'),
-        'duration':     int(round(args.get('duration',0))),
+        #'date':         utils.datetime_W3C_to_kodi(node.get('date_publish_from')), #file date
+        'count':        node.get('id'), #can be used to store an id for later, or for sorting purposes
+        'duration':     int(round(node.get('duration',0))),
     }
     
     if media_type=='video' or media_type=='livevideo':
         kodi_type = 'video'
         infos_video = {
+            'aired':        utils.datetime_W3C_to_kodi(node.get('date_publish_from')),
             'genre':        node.get('category',{}).get('label','').encode('utf-8'),
             'plot':         node.get('description','').encode('utf-8'),#Long Description
             'plotoutline':  node.get('description','').encode('utf-8'),#Short Description
@@ -597,7 +593,8 @@ def media_to_kodi_item(node,args={}):
             context_actions.append(action_download)
 
     li = {
-        'label':    label,
+        'label':    title,
+        'label2':   subtitle,
         'thumb':    node.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370','').encode('utf-8').strip(),
         'fanart':   node.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip(),
         'url':      common.plugin.get_url(action='stream_url',url=media_url),
