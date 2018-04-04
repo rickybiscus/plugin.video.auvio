@@ -104,46 +104,32 @@ def clean_base_datas(node):
     else:
         return new_node
 
-
-@common.plugin.cached(common.cachetime_categories)
-def get_categories():
-    """
-    Extract the categories fetched in get_base_datas()
-    """
-
-    global categories
+#@common.plugin.cached(common.cachetime_app_settings) 
+def get_app_settings():
+    #Get app settings (menu items & some other variables)
     
-    if not categories :
+    url = common.cryo_base_url + 'setting/settinglist'
+    url_params = {
+        'partner_key':  common.cryo_partner_key,
+        'v':            7
+    }
 
-        common.plugin.log("api.get_categories")
+    json_data = utils.request_url(url,url_params)
+    datas = json.loads(json_data)
+    common.plugin.log("api.get_app_settings")
+    common.plugin.log(json_data)
+    return datas
 
-        base_datas = get_base_datas()
-        items = base_datas.get('items').get('category').get('items')
-        categories = []
-        
-        for category_slug in items:
-            
-            category_raw = items.get(category_slug)
-            category = {}
-
-            try:
-                prefix, id = category_slug.split('category-')
-                category['id'] = id
-            except:
-                common.plugin.log_error("api.get_channels(): skipping category '%s'" % category_slug)
-                pass
-
-            if category.get('id'):
-                category['name'] = category_raw['name'].encode('utf-8').strip()
-                categories.append(category)
-
+def get_menu_categories():
+    # Get menu categories
+    app_datas = get_app_settings()
+    categories = app_datas['settings']['menu']['categories']
     return categories
+    
 
 @common.plugin.cached(common.cachetime_channels)
 def get_channels():
-    """
-    Get channels from the API
-    """
+    #Get channels from the API
     
     global channels
     
@@ -251,16 +237,18 @@ def get_live_videos(page=1):
         'offset':       (page - 1) * limit,
         'limit':        limit,
     }
-
+    
+    #API request
+    json_data = None
     json_data = utils.request_url(url,url_params)
+
+    #handle datas
     if not json_data:
         return
-    
-    nodes = json.loads(json_data)
-
-    common.plugin.log('api.get_live_videos: found %d nodes' % len(nodes))
-
-    return nodes
+    else:
+        nodes = json.loads(json_data)
+        common.plugin.log('api.get_live_videos: found %d nodes' % len(nodes))
+        return nodes
 
 def get_channel_current_live(channel_slug):
 

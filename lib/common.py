@@ -28,7 +28,7 @@ cryo_partner_key = '97a0ceb4562f285ba770aaba6c81d047'
 auvio_url = 'http://www.rtbf.be/auvio/'
 
 #in minutes
-cachetime_categories = 60 * 24
+cachetime_app_settings = 60 * 24
 cachetime_channels = 60 * 24
 cachetime_programs = 60 * 24
 cachetime_media_data = 60 * 24

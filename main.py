@@ -143,7 +143,7 @@ def list_categories(params):
     
     listing = []
     
-    categories = api.get_categories()
+    categories = api.get_menu_categories()
 
     if categories:
         for item in categories:
@@ -274,16 +274,17 @@ def list_medias(params):
     elif filter_medias == 'category_medias_recent':
         nodes = api.get_category_medias(category_id,page)
 
-    for node in nodes:
-        li = media_to_kodi_item(node,listing_params)
-        listing.append(li)  # Item label
+    if nodes and len(nodes):
+        for node in nodes:
+            li = media_to_kodi_item(node,listing_params)
+            listing.append(li)  # Item label
 
     #menu link
     link_root = navigate_root()
     listing.append(link_root)
     
     #pagination link if the listing is not empty
-    if len(nodes):
+    if nodes and len(nodes):
         link_next = next_medias_link(params)
         if link_next:
             listing.append(link_next)
@@ -524,7 +525,7 @@ def category_to_kodi_item(node):
     """
     
     li = {
-        'label':    node.get('name',''),
+        'label':    node.get('label',''),
         'url':      common.plugin.get_url(action='list_medias',filter_medias='category_medias_recent',category_id=id)
     }
     return li
