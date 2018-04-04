@@ -24,6 +24,7 @@ sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.au
 import common
 import scraper
 import api
+import gigya
 import utils
 
 from simpleplugin import Addon
@@ -169,10 +170,10 @@ def list_selection(params):
     
     listing = []
     
-    selection = scraper.get_selection()
+    nodes = scraper.get_selection()
 
-    if selection:
-        for media_node in selection:
+    if nodes:
+        for media_node in nodes:
             li = media_to_kodi_item(media_node)
             listing.append(li)  # Item label
         
@@ -193,7 +194,25 @@ def list_selection(params):
 @common.plugin.action()
 def list_favorites(params):
     
-    listing = []
+    user_login = Addon().get_setting('email')
+    user_pwd = Addon().get_setting('password')
+    
+    session = gigya.get_user_session(user_login,user_pwd)
+    uid = session['UID']
+    
+    #user_datas = gigya.get_account_info(uid)
+    user_token = gigya.get_jwt(uid)
+    
+    nodes =  api.get_user_favorites(user_token)
+    
+    if nodes:
+        for media_node in nodes:
+            li = media_to_kodi_item(media_node)
+            listing.append(li)  # Item label
+        
+    sortable_by = (
+        xbmcplugin.SORT_METHOD_LABEL
+    )
 
     return common.plugin.create_listing(
         listing,
@@ -313,8 +332,8 @@ def stream_url(params):
     common.plugin.log("stream_url() url:%s" % (url))
 
     if not url:
-        popup("Impossible de lire ce flux")
-        common.plugin.log_error("Impossible de lire ce flux")
+        common.popup("Impossible de lire ce flux")
+        plugin.log_error("Impossible de lire ce flux")
         return
         
     liz = xbmcgui.ListItem(path=url)

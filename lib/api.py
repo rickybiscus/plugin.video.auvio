@@ -336,3 +336,39 @@ def get_program_medias(id,page=1):
     common.plugin.log('api.get_program_medias: found %d nodes' % len(nodes))
     
     return nodes
+
+def get_user_favorites(user_token, type='media', offset = None,limit = None):
+    
+    nodes = []
+    
+    if user_token:
+    
+        #TOFIX what if not / bad token ?
+
+        url = common.cryo_base_url + 'media/favorite/favoritelist'
+        url_params = {
+            'type':         type,
+            'partner_key':  common.rtbf_api_key,
+            'v':            8,
+            'include_drm':  'true',
+        }
+
+        if offset:
+            url_params['offset'] = offset
+
+        if limit:
+            url_params['limit'] = limit
+
+        url_headers = {
+            'Accept':           "application/json",
+            'Authorization':    "Bearer " + user_token,
+        }
+
+        json_data = utils.request_url(url,url_params,url_headers)
+
+        if json_data:
+            nodes = json.loads(json_data)
+
+    common.plugin.log('api.get_user_favorites: found %d nodes' % len(nodes))
+    
+    return nodes
