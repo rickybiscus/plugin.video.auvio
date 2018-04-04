@@ -54,14 +54,29 @@ def request_url(url, params={}, headers={}):
         response = urllib2.urlopen(req)
         data = response.read()
         response.close()
-    except urllib2.URLError as e:
-        common.plugin.log_error("Remote request error for URL %s: %r" % (url,e))
-        return
-    except socket.timeout, e:
-        common.plugin.log_error("Remote request error for URL %s: %r" % (url,e))
-        return
+        return data
+        
+    except urllib2.HTTPError, e:
+        common.plugin.log('request_url : unable to get %s' % url)
+        common.plugin.log('HTTPError = ' + str(e.code))
+        raise
+        
+    except urllib2.URLError, e:
+        common.plugin.log('request_url : unable to get %s' % url)
+        common.plugin.log('URLError = ' + str(e.reason))
+        raise
+        
+    except httplib.HTTPException, e:
+        common.plugin.log('request_url : unable to get %s' % url)
+        common.plugin.log('HTTPException')
+        raise
+        
+    except Exception:
+        import traceback
+        common.plugin.log('request_url : unable to get %s' % url)
+        common.plugin.log('generic exception: ' + traceback.format_exc())
+        raise
 
-    return data
 
 def now():
   return datetime.datetime.now(dateutil.tz.tzlocal())
