@@ -40,13 +40,13 @@ def request_url(url, params={}, headers={}):
     #request headers
     headers_defaults = {
         'Referer':      'https://www.rtbf.be',
-        'user-agent':   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36',
+        'User-Agent':   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36',
     }
     
     headers = parse_dict_args(headers_defaults,headers)
     
     common.plugin.log('request_url : %s' % url)
-    common.plugin.log(headers_defaults)
+    common.plugin.log(headers)
 
     req = urllib2.Request(url, headers=headers)
 
