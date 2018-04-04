@@ -22,7 +22,6 @@ sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.au
 
 # Plugin modules
 import common
-import scraper
 import api
 import gigya
 import utils
@@ -39,35 +38,28 @@ def root(params):
     
     listing.append({
         'label':    'En direct',
-        'url':     common.plugin.get_url(action='list_medias',filter_medias='live_medias_recent'),
+        'url':     common.plugin.get_url(action='menu_live'),
+    })
+    
+    listing.append({
+        'label':    'Accueil',
+        'url':     common.plugin.get_url(action='menu_homepage'),
     })
 
     listing.append({
         'label':    'Chaînes',
-        'url':      common.plugin.get_url(action='list_channels')
+        'url':      common.plugin.get_url(action='menu_channels')
     })
 
     listing.append({
-        'label':    'Émissions',
-        'url':      common.plugin.get_url(action='list_programs')
-    })
-    
-    listing.append({
         'label':    'Catégories',
-        'url':      common.plugin.get_url(action='list_categories')
+        'url':      common.plugin.get_url(action='menu_categories')
     })
-    
+
     listing.append({
-        'label':    'Sélection',
-        'url':      common.plugin.get_url(action='list_selection')
+        'label':    'Mon Auvio',
+        'url':      common.plugin.get_url(action='menu_favorites')
     })
-    
-    if user_has_account():
-    
-        listing.append({
-            'label':    'Mon Auvio',
-            'url':      common.plugin.get_url(action='list_favorites')
-        })
 
 
     return common.plugin.create_listing(
@@ -79,54 +71,22 @@ def root(params):
         #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
         #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
     )
-
 
 @common.plugin.action()
 def menu_single_channel(params):
 
-    channel_id = int(params.get('id',0))
-    page = int(params.get('page',1))
-
-    channel = api.get_single_channel_by_id(channel_id)
-    channel_slug = channel.get('key')
-    channel_thumb = channel.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370',None).encode('utf-8').strip()
-    channel_fanart = channel.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080',None).encode('utf-8').strip()
     listing = []
-    
-    common.plugin.log("menu_single_channel")
-    common.plugin.log(json.dumps(channel))
+    sid = int(params.get('sidebar_id',0)) #to get the channel 'sections' (called widgets in Auvio)
+    cid = int(params.get('channel_id',0))
+    ctype = params.get('channel_type')
 
-    type = channel.get('type',None)
-    
-    if type=='tv':
+    if sid:
+        sidebar_listing = get_sidebar_listing(sid)
+        listing += sidebar_listing
         
-        #current live channel media
-        media_node = api.get_channel_current_live(channel_slug)
-        if media_node:
-            live_item = media_to_kodi_item(media_node,{'show_channel':False})
-            listing.append(live_item)
-            
-        #recent live medias
-        media_nodes = scraper.get_channel_recent_medias(channel_id,page)
-        if media_nodes:
-            for media_node in media_nodes:
-                li = media_to_kodi_item(media_node,{'show_channel':False})
-                listing.append(li)  # Item label
-            
-    elif type=='radio' or type=='webradio':
-        
-        #radio stream
-        live_item = radio_stream_to_kodi_item(channel,{'show_type':False})
-        live_item['label'] += ' [COLOR yellow]direct[/COLOR]'
-        listing.append(live_item)
-        
-        #recent podcasts
-        recent_podcasts = scraper.get_radio_recent_podcasts(channel_id,page)
-        if recent_podcasts:
-            for podcast in recent_podcasts:
-                li = podcast_to_kodi_item(podcast)
-                listing.append(li)  # Item label
-
+    if ctype == 'radio':
+        radio_listing = get_subradio_listing(cid)
+        listing += radio_listing
 
     return common.plugin.create_listing(
         listing,
@@ -139,7 +99,28 @@ def menu_single_channel(params):
     )
 
 @common.plugin.action()
-def list_categories(params):
+def menu_single_category(params):
+    
+    listing = []
+    sid = int(params.get('sidebar_id',0)) #to get the channel 'sections' (called widgets in Auvio)
+    cid = int(params.get('category_id',0))
+    
+    if sid:
+        sidebar_listing = get_sidebar_listing(sid)
+        listing += sidebar_listing
+    
+    return common.plugin.create_listing(
+        listing,
+        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
+        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one. 
+        #cache_to_disk = True, #cache this view to disk.
+        #sort_methods = None, #he list of integer constants representing virtual folder sort methods.
+        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
+        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
+    )
+
+@common.plugin.action()
+def menu_categories(params):
     
     listing = []
     
@@ -164,73 +145,89 @@ def list_categories(params):
         #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
     )
 
+@common.plugin.action()
+def menu_favorites(params):
+    
+    if not user_has_account():
+        
+        common.popup("Veuillez configurer votre compte dans les options de l'addon.")
+        
+    else:
+        
+        listing = []
+
+        user_login = Addon().get_setting('email')
+        user_pwd = Addon().get_setting('password')
+
+        session = gigya.get_user_session(user_login,user_pwd)
+        uid = session['UID']
+
+        #user_datas = gigya.get_account_info(uid)
+        user_token = gigya.get_jwt(uid)
+
+        favorites =  api.get_user_favorites(user_token)
+
+        if favorites:
+            for favorite in favorites:
+                media_id = favorite.get('data',{}).get('id',0)
+                media_node = api.get_media_details(media_id) #so we match the other API medias; because media_to_kodi_item can handle it - which is not the case of the current 'data' attribute. TOFIX TOCHECK.
+                li = media_to_kodi_item(media_node)
+                listing.append(li)  # Item label
+
+        sortable_by = (
+            xbmcplugin.SORT_METHOD_LABEL
+        )
+
+        return common.plugin.create_listing(
+            listing,
+            #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
+            #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one. 
+            #cache_to_disk = True, #cache this view to disk.
+            #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
+            #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
+            #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
+        )
 
 @common.plugin.action()
-def list_selection(params):
+def list_widget_section_items(params):
+    
+    wid = int(params.get('widget_id',0))
+    sid = int(params.get('section_id',0))
     
     listing = []
     
-    nodes = scraper.get_selection()
+    #widget sections
+    widget_details = api.get_widget_detail(wid)
+    widget_metas = widget_details.get('widget_meta')
+    widget_blocks = widget_details.get('widget_blocks')
 
-    if nodes:
-        for media_node in nodes:
-            li = media_to_kodi_item(media_node)
-            listing.append(li)  # Item label
-        
-    sortable_by = (
-        xbmcplugin.SORT_METHOD_LABEL
-    )
+    section_metas = widget_metas[sid]
+    blocks = widget_blocks[sid]
+    blocks_metas = blocks.get('meta',[])
+    blocks_content = blocks.get('content',[])
+
+    #BLOCK ITEMS
+    for item in blocks_content:
+        li = media_to_kodi_item(item,{'show_channel':False})
+        listing.append(li)  # Item label
 
     return common.plugin.create_listing(
         listing,
         #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
         #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one. 
         #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
-
-@common.plugin.action()
-def list_favorites(params):
-    
-    user_login = Addon().get_setting('email')
-    user_pwd = Addon().get_setting('password')
-    
-    session = gigya.get_user_session(user_login,user_pwd)
-    uid = session['UID']
-    
-    #user_datas = gigya.get_account_info(uid)
-    user_token = gigya.get_jwt(uid)
-    
-    nodes =  api.get_user_favorites(user_token)
-    
-    if nodes:
-        for media_node in nodes:
-            li = media_to_kodi_item(media_node)
-            listing.append(li)  # Item label
-        
-    sortable_by = (
-        xbmcplugin.SORT_METHOD_LABEL
-    )
-
-    return common.plugin.create_listing(
-        listing,
-        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one. 
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
+        #sort_methods = None, #he list of integer constants representing virtual folder sort methods.
         #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
         #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
     )
 
 
 @common.plugin.action()
-def list_channels(params):
+def menu_channels(params):
     
     listing = []
     
-    channels = api.get_channels()
+    channels = api.get_menu_channels()
 
     if channels:
         for channel in channels:
@@ -248,47 +245,16 @@ def list_channels(params):
     )
 
 @common.plugin.action()
-def list_medias(params):
-    
-    common.plugin.log("list_medias")
-    common.plugin.log(json.dumps(params))
-    
-    filter_medias = params.get('filter_medias','')
-    page =          int(params.get('page',1))
-    channel_id =    int(params.get('channel_id',0))
-    category_id =   int(params.get('category_id',0))
-    program_id =    int(params.get('program_id',0))
+def menu_live(params):
 
-    nodes = []
     listing = []
-    listing_params = {}
-
-    #live
-    if filter_medias == 'live_medias_recent':
-        nodes = api.get_live_videos(page)
-    #program
-    elif filter_medias == 'program_medias_recent':
-        nodes = api.get_program_medias(program_id,page)
-        listing_params['show_channel'] = False
-    #category
-    elif filter_medias == 'category_medias_recent':
-        nodes = api.get_category_medias(category_id,page)
-
+    nodes = api.get_live_videos()
+    
     if nodes and len(nodes):
         for node in nodes:
-            li = media_to_kodi_item(node,listing_params)
+            li = media_to_kodi_item(node)
             listing.append(li)  # Item label
 
-    #menu link
-    link_root = navigate_root()
-    listing.append(link_root)
-    
-    #pagination link if the listing is not empty
-    if nodes and len(nodes):
-        link_next = next_medias_link(params)
-        if link_next:
-            listing.append(link_next)
-    
     sortable_by = (xbmcplugin.SORT_METHOD_DATE,
                    xbmcplugin.SORT_METHOD_DURATION)
 
@@ -302,29 +268,27 @@ def list_medias(params):
         #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
     )
 
-
 @common.plugin.action()
-def list_programs(params):
-    
+def menu_homepage(params):
     listing = []
-    shows = scraper.get_programs()
+    sid = '3669' #home sidebar
+
+    sidebar_listing = get_sidebar_listing(sid)
+    listing += sidebar_listing
     
-    if shows:
-        for item in shows:        
-            li = program_to_kodi_item(item)
-            listing.append(li)
+    sortable_by = (xbmcplugin.SORT_METHOD_DATE,
+                   xbmcplugin.SORT_METHOD_DURATION)
 
     return common.plugin.create_listing(
         listing,
-        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
+        succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
         #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one. 
         #cache_to_disk = True, #cache this view to disk.
         #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
         #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
         #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
     )
-
-
+    
 
 @common.plugin.action()
 def stream_url(params):
@@ -445,111 +409,112 @@ def context_action_download(title,url):
         'XBMC.RunPlugin(%s)' % common.plugin.get_url(action='download_media',title=title,url=url)
     )
 
-def channel_to_kodi_item(node):
-    """
-    Convert a channel API object to a kodi list item
-    """
-
-    label = node.get('name','').encode('utf-8').strip()
-    label = "{0} - [I]{1}[/I]".format(label,node.get('type'))
+def get_sidebar_listing(sid):
     
-    channel_type = node.get('type',None)
-    channel_url = ''
+    # Get the KODI menu items for a sidebar.
+
+    listing = []
+
+    #get sidebar widgets
+    widgets = api.get_sidebar_widget_list(sid)
     
-    has_submenu = True
-
-    channel_url = node.get('links',{}).get('auvio_channel',None)
-    channel_id = utils.get_url_arg(channel_url,'id')
-
-    if channel_id != str(node.get('id')):
-        has_submenu = False
+    if widgets:
+        for widget in widgets:
             
-    if not has_submenu and (channel_type == 'webradio' or channel_type == 'radio'):
-        
-        li = radio_stream_to_kodi_item(node)
-        li['label'] += ' [COLOR yellow]direct[/COLOR]'
-        
-    else:
-        
-        channel_url = common.plugin.get_url(action='menu_single_channel',id=node.get('id'))
+            #widget sections
+            wid = int(widget.get('id',0))
+            widget_details = api.get_widget_detail(wid)
+            widget_metas = widget_details.get('widget_meta')
+            widget_blocks = widget_details.get('widget_blocks')
+            
+            section_count = len(widget_metas);
+            
+            if section_count:
+                current_section = 0;
+                while current_section < section_count:
+                    
+                    try:
+                        blocks = widget_blocks[current_section]
+                    except IndexError:
+                        current_section += 1
+                        break;
 
-        li = {
-            'label':    label,
-            #'label2':   node.get('type'),
-            'url':      channel_url,
-            'thumb':    node.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370',None).encode('utf-8').strip(),
-            'fanart':   node.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080',None).encode('utf-8').strip(),
-        }
-        
-    return li
+                    #section_metas = widget_metas[current_section]
+                    blocks_metas = blocks.get('meta',[])
+                    blocks_content = blocks.get('content',[])
 
-def radio_stream_to_kodi_item(node,args={}):
+                    section_li = {
+                        'label':        blocks_metas.get('title','').encode('utf-8'),
+                        'label2':       blocks_metas.get('subtitle','').encode('utf-8'),
+                        'url':          common.plugin.get_url(action='list_widget_section_items',widget_id=wid,section_id=current_section),
+                        'is_folder':    True,
+                    }
+
+                    listing.append(section_li)
+                    current_section += 1
+                
+    return listing
+
+def get_subradio_listing(cid):
     
-    """
-    Convert a channel API object to a kodi list item
-    """
-    
-    label = node.get('name','').encode('utf-8').strip()
-    
-    if args.get('show_type',True):
-        label = "{0} - [I]{1}[/I]".format(label,node.get('type'))
+    # Get the KODI audio streams for a radio channel.
 
-    channel_url = ''
+    listing = []
     
+    url_params = {
+        'id':   cid
+    }
+    subchannels = api.get_channel_list(url_params)
+    
+    if subchannels:
+        for channel in subchannels:
+            
+            #stream URL
+            channel_url = ''
+            streamurl = channel.get('streamurl',None)
+            if streamurl:
+                media_url = streamurl.get('mp3','').encode('utf-8').strip()
+                channel_url = common.plugin.get_url(action='stream_url',url=media_url)
 
+            li = {
+                'label':    channel.get('name').encode('utf-8').strip(),
+                'url':      channel_url,
+                'thumb':    channel.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370',None).encode('utf-8').strip(),
+                'fanart':   channel.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080',None).encode('utf-8').strip(),
+                'is_playable':  True
+            }
+            
+            listing.append(li)
+            
+        return listing
+            
 
-    #stream URL
-    media_url = ''
-    stream_node = node.get('streamurl',None)
-    if stream_node:
-        media_url = stream_node.get('mp3','').encode('utf-8').strip()
-        channel_url = common.plugin.get_url(action='stream_url',url=media_url)
+def channel_to_kodi_item(channel):
+    
+    # Convert a category API object to a kodi list item
+    
+    cid = int(channel.get('id',0))
+    ctype = channel.get('type')
+    sid = int(channel.get('sidebar_id',0))
+    label = channel.get('label','').encode('utf-8')
 
     li = {
         'label':    label,
-        #'label2':   node.get('type'),
-        'url':      channel_url,
-        'thumb':    node.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370',None).encode('utf-8').strip(),
-        'fanart':   node.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080',None).encode('utf-8').strip(),
-        'is_playable':  True
-    }
- 
-    return li
-
-def category_to_kodi_item(node):
-    
-    id = int(node.get('id',0))
-    
-    """
-    Convert a category API object to a kodi list item
-    """
-    
-    li = {
-        'label':    node.get('label',''),
-        'url':      common.plugin.get_url(action='list_medias',filter_medias='category_medias_recent',category_id=id)
+        'url':      common.plugin.get_url(action='menu_single_channel',channel_id=cid,channel_type=ctype,sidebar_id=sid)
     }
     return li
 
-def program_to_kodi_item(node):
+def category_to_kodi_item(category):
     
-    """
-    Convert a show API object to a kodi list item
-    """
+    # Convert a category API object to a kodi list item
     
-    id = int(node.get('id',0))
+    cid = int(category.get('id',0))
+    sid = int(category.get('sidebar_id',0))
+    label = category.get('label','')
 
     li = {
-        'label':    node.get('name',''),
-        'url':      common.plugin.get_url(action='list_medias',filter_medias='program_medias_recent',program_id=id),
-        #'thumb':    image, # Item thumbnail
-        #'fanart':   image,
-        'info': {
-            'video': { ##http://romanvm.github.io/Kodistubs/_autosummary/xbmcgui.html#xbmcgui.ListItem.setInfo
-                #'plot':         node.get('description',''),#Long Description
-                #'plotoutline':  node.get('description',''),#Short Description
-            }
-        }
-
+        'label':    label,
+        'url':      common.plugin.get_url(action='menu_single_category',category_id=cid,sidebar_id=sid)
     }
     return li
 
@@ -596,7 +561,7 @@ def media_to_kodi_item(node,args={}):
     if media_type=='video' or media_type=='livevideo':
         kodi_type = 'video'
         infos_video = {
-            'genre':        node.get('category',{}).get('label').encode('utf-8'),
+            'genre':        node.get('category',{}).get('label','').encode('utf-8'),
             'plot':         node.get('description','').encode('utf-8'),#Long Description
             'plotoutline':  node.get('description','').encode('utf-8'),#Short Description
         }
@@ -633,8 +598,8 @@ def media_to_kodi_item(node,args={}):
 
     li = {
         'label':    label,
-        'thumb':    node.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370',None).encode('utf-8').strip(),
-        'fanart':   node.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080',None).encode('utf-8').strip(),
+        'thumb':    node.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370','').encode('utf-8').strip(),
+        'fanart':   node.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip(),
         'url':      common.plugin.get_url(action='stream_url',url=media_url),
         'info': {
             kodi_type: infos
@@ -675,38 +640,6 @@ def podcast_to_kodi_item(node,args={}):
 
     return li
 
-def next_medias_link(params):
-    
-    filter_medias = params.get('filter_medias','')
-    page =          int(params.get('page',1))
-    channel_id =    int(params.get('channel_id',0))
-    category_id =   int(params.get('category_id',0))
-    program_id =    int(params.get('program_id',0))
-    
-    next_page = page + 1 
-
-    title = ".. Page suivante (%d)" % (next_page)
-
-    link = {
-        'label':    title,
-        'url':      common.plugin.get_url(
-                        action=         'list_medias',
-                        page=           next_page,
-                        filter_medias=  filter_medias,
-                        channel_id=     channel_id,
-                        category_id=    category_id,
-                        program_id=     program_id,
-                    )
-    }
-    
-    return link
-
-def navigate_root():
-    return {
-        'label':    ".. Retour au menu principal",
-        'url':      common.plugin.get_url(action='root')
-    }
-
 def user_has_account():
     user_login = Addon().get_setting('email')
     user_pwd = Addon().get_setting('password')
@@ -715,9 +648,6 @@ def user_has_account():
         return True
     else:
         return False
-
-
-
 
 # Start plugin from within Kodi.
 if __name__ == "__main__":

@@ -6,9 +6,7 @@ API methods (RTBF/Auvio)
 """
 
 # API data
-main_data = None
 channels = None
-categories = None
 
 import os
 import sys
@@ -26,85 +24,7 @@ from simpleplugin import Addon
 import common
 import utils
 
-
-def get_base_datas():
-    """
-    Fetch the header nav datas from API and clean it (menu items)
-    """
-    
-    global main_data
-    if main_data is None:
-
-        url = common.rtbf_url + 'news/api/menu'
-        url_params = {
-            'site':  'media', # 'data-site' attr from body
-        }
-        
-        progressdialog = xbmcgui.DialogProgress()
-        progressdialog.create(common.plugin.addon.getAddonInfo('name'))
-        progressdialog.update(0, 'Récupération des données...')
-        
-        common.plugin.log("get_base_datas")
-        
-        try:
-            
-            json_data = utils.request_url(url,url_params)
-            if not json_data:
-                return
-            
-            main_data = json.loads(json_data) #will generate unicode
-            main_data = clean_base_datas(main_data)
-            progressdialog.update(100, 'Done!')
-            
-        except:
-            main_data = False
-            progressdialog.update(0, 'Échec!')
-            xbmc.sleep(1000)
-        
-        progressdialog.close()
-        
-    #common.plugin.log("before clean_base_datas:")
-    #common.plugin.log(json.dumps(main_data))
-
-    #common.plugin.log("after clean_base_datas:")
-    #common.plugin.log(json.dumps(main_data))
-    
-    return main_data
-
-def clean_base_datas(node):
-    """
-    Recursive function that does cleanup the main JSON from get_base_datas() so it's easier to handle
-    """
-    new_node = {}
-    new_node_id = None
-    for key in node:
-        node_data = node[key]
-        if key == '@attributes':
-            for attr in node_data:
-                value = node_data[attr]
-                if attr == 'id':
-                    new_node_id = value
-                else:
-                    new_node[attr] = value
-            
-        else:
-            new_item = {}
-            for item in node_data:
-                item_dict = clean_base_datas(item)
-                item_id = item_dict.get('id')
-                new_item[item_id] = item_dict.get('value')
-                
-            new_node['items'] = new_item
-            
-    if new_node_id:
-        return {
-            'id':       new_node_id,
-            'value':    new_node
-        }
-    else:
-        return new_node
-
-#@common.plugin.cached(common.cachetime_app_settings) 
+@common.plugin.cached(common.cachetime_app_settings) 
 def get_app_settings():
     #Get app settings (menu items & some other variables)
     
@@ -121,50 +41,82 @@ def get_app_settings():
     return datas
 
 def get_menu_categories():
-    # Get menu categories
     app_datas = get_app_settings()
     categories = app_datas['settings']['menu']['categories']
     return categories
+
+def get_menu_channels():
+    app_datas = get_app_settings()
+    categories = app_datas['settings']['menu']['channels']
+    return categories
+
+@common.plugin.cached(common.cachetime_app_settings)
+def get_channel_list(url_params={}):
+    #Get ALL the channels from the API (not only the menu ones), including radios.  Can be filtered through optionnal url parameters.
     
-
-@common.plugin.cached(common.cachetime_channels)
-def get_channels():
-    #Get channels from the API
+    #url params
+    url_params_default = {
+        'partner_key':  common.cryo_partner_key,
+        'v':            7,
+    }
     
-    global channels
-    
-    if not channels :
+    url_params = utils.parse_dict_args(url_params_default,url_params)
 
-        common.plugin.log("api.get_channels")
+    common.plugin.log("api.get_channel_list")
 
-        items = []
+    url = common.cryo_base_url + 'epg/channellist'
 
-        url = common.cryo_base_url + 'epg/channellist'
-        url_params = {
-            'partner_key':  common.cryo_partner_key,
-            'v':            7,
-        }
-    
-        json_data = utils.request_url(url,url_params)
-        if not json_data:
-            return
-        
-        channels = json.loads(json_data)
+    json_data = utils.request_url(url,url_params)
+    if not json_data:
+        return
 
-    return channels
+    data = json.loads(json_data)
 
-def get_single_channel_by_id(id = None):
-    
-    if not id: 
-        common.plugin.log_error('api.get_single_channel_by_id() : parameter id is missing')
-        return None
+    return data
 
-    common.plugin.log("get_single_channel by ID:"+str(id))
+@common.plugin.cached(common.cachetime_medias_recent)
+def get_sidebar_widget_list(sidebar_id):
 
-    for channel in get_channels():
-        if id == channel.get('id',0):
-            return channel
-    
+    url_params = {
+        'sidebar_id':   sidebar_id,
+        'partner_key':  common.cryo_partner_key,
+        'v':            7,
+    }
+
+    common.plugin.log("api.get_sidebar_widget_list: #" + str(sidebar_id))
+
+    url = common.cryo_base_url + 'widget/widgetlist'
+
+    json_data = utils.request_url(url,url_params)
+    if not json_data:
+        return
+
+    data = json.loads(json_data)
+    common.plugin.log(json_data)
+
+    return data
+
+@common.plugin.cached(common.cachetime_medias_recent)
+def get_widget_detail(widget_id):
+    url_params = {
+        'id':   widget_id,
+        'partner_key':  common.cryo_partner_key,
+        'v':            8,
+    }
+
+    common.plugin.log("api.get_widget_detail: #" + str(widget_id))
+
+    url = common.cryo_base_url + 'widget/widgetdetail'
+
+    json_data = utils.request_url(url,url_params)
+    if not json_data:
+        return
+
+    data = json.loads(json_data)
+    #common.plugin.log(json_data)
+
+    return data
+
 @common.plugin.cached(common.cachetime_media_data)
 def get_media_details(id):
     """
@@ -198,44 +150,20 @@ def get_media_details(id):
     common.plugin.log(json.dumps(data))
     return data
 
-
-def get_live_radio_config(radio_slug):
-    
-    """
-    Get radio informations from the API
-    """
-    
-    #get config.json
-    config_url = 'http://www.rtbf.be/radio/liveradio/rtbf/radios/%s/config.json' % radio_slug
-    json_data = utils.request_url(config_url)
-    if not json_data:
-        return
-    
-    common.plugin.log('config.json')
-    common.plugin.log(json_data)
-    data = json.loads(json_data)
-    
-    return data
-
-
 def get_live_videos(page=1):
-    """
-    parse live video streams
-    """
+    # parse live video streams
+
     items = []
     
     limit = int(Addon().get_setting('medias_per_page'))
 
     url = common.cryo_base_url + 'live/planninglist'
     url_params = {
+        'target_site':  'mediaz',
+        #'offset':       (page - 1) * limit,
+        #'limit':        limit,
         'partner_key':  common.cryo_partner_key,
-        'v':            7,
-        'target_site':  'media',
-        'origin_site':  'media',
-        'category_id':  0,
-        'start_date':   '',
-        'offset':       (page - 1) * limit,
-        'limit':        limit,
+        'v':            8,
     }
     
     #API request
@@ -249,81 +177,6 @@ def get_live_videos(page=1):
         nodes = json.loads(json_data)
         common.plugin.log('api.get_live_videos: found %d nodes' % len(nodes))
         return nodes
-
-def get_channel_current_live(channel_slug):
-
-    items = []
-    
-    url = common.cryo_base_url + 'live/planningcurrent'
-    url_params = {
-        'partner_key':  common.cryo_partner_key,
-        'v':            7,
-        'target_site':  'mediaz',
-        'channel':      channel_slug
-    }
-
-    json_data = utils.request_url(url,url_params)
-    if not json_data:
-        return
-    
-    node = json.loads(json_data)
-
-    return node
-
-def get_category_medias(id,page=1):
-
-    items = []
-    
-    limit = int(Addon().get_setting('medias_per_page'))
-
-    url = common.cryo_base_url + 'media/objectlist'
-    url_params = {
-        'partner_key':  common.cryo_partner_key,
-        'v':            7,
-        'target_site':  'mediaz',
-        'category_id':  id,
-        'offset':       (page - 1) * limit,
-        'limit':        limit,
-    }
-
-    json_data = utils.request_url(url,url_params)
-    if not json_data:
-        return
-    
-    nodes = json.loads(json_data)
-
-    common.plugin.log('api.get_category_medias: found %d nodes' % len(nodes))
-    
-    return nodes
-
-def get_program_medias(id,page=1):
-    """
-    Get a list of recent medias by show ID or IDs, from the API
-    """
-
-    items = []
-    
-    limit = int(Addon().get_setting('medias_per_page'))
-    
-    url = common.cryo_base_url + 'media/objectlist'
-    url_params = {
-        'partner_key':  common.cryo_partner_key,
-        'v':            7,
-        'program_id':   id,
-        'target_site':  'mediaz',
-        'offset':       (page - 1) * limit,
-        'limit':        limit,
-    }
-
-    json_data = utils.request_url(url,url_params)
-    if not json_data:
-        return
-    
-    nodes = json.loads(json_data)
-
-    common.plugin.log('api.get_program_medias: found %d nodes' % len(nodes))
-    
-    return nodes
 
 def get_user_favorites(user_token, type='media', offset = None,limit = None):
     
