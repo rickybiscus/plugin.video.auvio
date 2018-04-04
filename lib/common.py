@@ -24,7 +24,7 @@ plugin = Plugin()
 
 rtbf_url = 'http://www.rtbf.be/'
 cryo_base_url = rtbf_url + "api/partner/generic/"
-cryo_partner_key = '82ed2c5b7df0a9334dfbda21eccd8427'
+cryo_partner_key = '97a0ceb4562f285ba770aaba6c81d047'
 auvio_url = 'http://www.rtbf.be/auvio/'
 
 #in minutes
