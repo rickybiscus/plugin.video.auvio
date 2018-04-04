@@ -519,15 +519,18 @@ def category_to_kodi_item(category):
     return li
 
 def media_to_kodi_item(node):
+    
+    #common.plugin.log(json.dumps(node))
 
     context_actions = [] #context menu actions
 
     #build label
     title = node.get('title','').encode('utf-8').strip()
     subtitle = node.get('subtitle','').encode('utf-8').strip()
-    channel = node.get('channel',{}).get('label','').encode('utf-8').strip()
+    channel_node = node.get('channel')
 
-    if channel:
+    if channel_node:
+        channel = channel_node.get('label','').encode('utf-8').strip()
         title = "[B]{0}[/B] - {1}".format(channel,title)
 
     if subtitle:
