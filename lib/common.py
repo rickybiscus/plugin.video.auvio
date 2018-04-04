@@ -23,9 +23,8 @@ from simpleplugin import Addon
 plugin = Plugin()
 
 rtbf_url = 'http://www.rtbf.be/'
-rtbf_url_api = rtbf_url + "api/"
-cryo_base_url = "https://www.rtbf.be/api/partner/generic/"
-rtbf_api_key = '82ed2c5b7df0a9334dfbda21eccd8427'
+cryo_base_url = rtbf_url + "api/partner/generic/"
+cryo_partner_key = '82ed2c5b7df0a9334dfbda21eccd8427'
 auvio_url = 'http://www.rtbf.be/auvio/'
 
 #in minutes

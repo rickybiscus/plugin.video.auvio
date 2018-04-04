@@ -155,7 +155,7 @@ def get_channels():
 
         url = common.cryo_base_url + 'epg/channellist'
         url_params = {
-            'partner_key':  common.rtbf_api_key,
+            'partner_key':  common.cryo_partner_key,
             'v':            7,
         }
     
@@ -189,7 +189,7 @@ def get_media_details(id):
 
     url = common.cryo_base_url + 'media/objectdetail'
     url_params = {
-        'partner_key':  common.rtbf_api_key,
+        'partner_key':  common.cryo_partner_key,
         'v':            7,
         'target_site':  'mediaz',
         'id':           id,
@@ -242,7 +242,7 @@ def get_live_videos(page=1):
 
     url = common.cryo_base_url + 'live/planninglist'
     url_params = {
-        'partner_key':  common.rtbf_api_key,
+        'partner_key':  common.cryo_partner_key,
         'v':            7,
         'target_site':  'media',
         'origin_site':  'media',
@@ -268,7 +268,7 @@ def get_channel_current_live(channel_slug):
     
     url = common.cryo_base_url + 'live/planningcurrent'
     url_params = {
-        'partner_key':  common.rtbf_api_key,
+        'partner_key':  common.cryo_partner_key,
         'v':            7,
         'target_site':  'mediaz',
         'channel':      channel_slug
@@ -290,7 +290,7 @@ def get_category_medias(id,page=1):
 
     url = common.cryo_base_url + 'media/objectlist'
     url_params = {
-        'partner_key':  common.rtbf_api_key,
+        'partner_key':  common.cryo_partner_key,
         'v':            7,
         'target_site':  'mediaz',
         'category_id':  id,
@@ -319,7 +319,7 @@ def get_program_medias(id,page=1):
     
     url = common.cryo_base_url + 'media/objectlist'
     url_params = {
-        'partner_key':  common.rtbf_api_key,
+        'partner_key':  common.cryo_partner_key,
         'v':            7,
         'program_id':   id,
         'target_site':  'mediaz',
@@ -348,7 +348,7 @@ def get_user_favorites(user_token, type='media', offset = None,limit = None):
         url = common.cryo_base_url + 'media/favorite/favoritelist'
         url_params = {
             'type':         type,
-            'partner_key':  common.rtbf_api_key,
+            'partner_key':  common.cryo_partner_key,
             'v':            8,
             'include_drm':  'true',
         }
