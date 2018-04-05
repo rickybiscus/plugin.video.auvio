@@ -1,8 +1,8 @@
 import json
 import urllib
-import common
 
-#
+# Plugin modules
+import common
 import utils
 
 # Gigya.com
@@ -15,12 +15,10 @@ gigya_socialize_base_url = "https://socialize.eu1.gigya.com/socialize.";
 gigya_social_login_redirect_uri = "https://www.rtbf.be/app/auvio/android";
 gigya_user_key = "APUBPn9ofPkV";
 
-# retrieve Gigya user session
-# TOFIX should be cached in a way or another so we don't request it over & over ?  For now, cache it for 5 minutes
-# TOFIX should be cached ONLY if success !
-# TOFIX use MemStorage ? http://romanvm.github.io/script.module.simpleplugin/storage.html
-@common.plugin.cached(5)
+
 def get_user_session(user_login,user_pwd):
+    
+    # retrieve Gigya user session
     
     url_params = {
         'loginID':  user_login,
@@ -97,6 +95,9 @@ def get_account_info(uid):
     return data['userInfo']
   
 def get_jwt(uid):
+    
+    #get the Gigya token based on a user ID
+    
     url_params = {
         'targetUID':    uid,
         'apiKey':       gigya_api_key,

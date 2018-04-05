@@ -20,7 +20,11 @@ import urllib
 # Add the /lib folder to sys
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
+# SimplePlugin
+from simpleplugin import Plugin
 from simpleplugin import Addon
+
+# Plugin modules
 import common
 import utils
 
@@ -181,34 +185,30 @@ def get_live_videos(page=1):
 def get_user_favorites(user_token, type='media', offset = None,limit = None):
     
     nodes = []
-    
-    if user_token:
-    
-        #TOFIX what if not / bad token ?
 
-        url = common.cryo_base_url + 'media/favorite/favoritelist'
-        url_params = {
-            'type':         type,
-            'partner_key':  common.cryo_partner_key,
-            'v':            8,
-            'include_drm':  'true',
-        }
+    url = common.cryo_base_url + 'media/favorite/favoritelist'
+    url_params = {
+        'type':         type,
+        'partner_key':  common.cryo_partner_key,
+        'v':            8,
+        'include_drm':  'true',
+    }
 
-        if offset:
-            url_params['offset'] = offset
+    if offset:
+        url_params['offset'] = offset
 
-        if limit:
-            url_params['limit'] = limit
+    if limit:
+        url_params['limit'] = limit
 
-        url_headers = {
-            'Accept':           "application/json",
-            'Authorization':    "Bearer " + user_token,
-        }
+    url_headers = {
+        'Accept':           "application/json",
+        'Authorization':    "Bearer " + user_token,
+    }
 
-        json_data = utils.request_url(url,url_params,url_headers)
+    json_data = utils.request_url(url,url_params,url_headers)
 
-        if json_data:
-            nodes = json.loads(json_data)
+    if json_data:
+        nodes = json.loads(json_data)
 
     common.plugin.log('api.get_user_favorites: found %d nodes' % len(nodes))
     

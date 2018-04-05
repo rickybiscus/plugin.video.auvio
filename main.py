@@ -20,16 +20,56 @@ import time
 # Add the /lib folder to sys
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
+# SimplePlugin
+from simpleplugin import Addon
+
 # Plugin modules
 import common
 import api
-import gigya
 import utils
-
-from simpleplugin import Addon
+import gigya
 
 # initialize_gettext
 #_ = common.plugin.initialize_gettext()
+
+
+def user_has_account():
+    user_login = Addon().get_setting('email')
+    user_pwd = Addon().get_setting('password')
+    
+    if user_login and user_pwd:
+        return True
+    else:
+        return False
+
+def get_user_jwt_token():
+    #get the Gigya token for the current user
+    #TOFIX should be cached in a way or another so we don't always call a new session ?
+    
+    if not user_has_account():
+        common.plugin.log("get_user_jwt_token - missing email or password")
+        raise ValueError("Veuillez configurer votre compte dans les options de l'addon.")
+        
+    else:
+        
+        user_login = Addon().get_setting('email')
+        user_pwd = Addon().get_setting('password')
+
+        session = gigya.get_user_session(user_login,user_pwd)
+        uid = session['UID']
+
+        #user_datas = gigya.get_account_info(uid)
+        user_token = gigya.get_jwt(uid)
+        
+        if not user_token:
+            
+            common.plugin.log("get_user_jwt_token - unable to get user token")
+            raise ValueError("Impossible de récupérer le token utilisateur.")
+            return #TOFIX TOCHECK do we need a to return here ?
+            
+        else:
+            
+            return user_token
  
 @common.plugin.action()
 def root(params):
@@ -155,15 +195,13 @@ def menu_favorites(params):
     else:
         
         listing = []
-
-        user_login = Addon().get_setting('email')
-        user_pwd = Addon().get_setting('password')
-
-        session = gigya.get_user_session(user_login,user_pwd)
-        uid = session['UID']
-
-        #user_datas = gigya.get_account_info(uid)
-        user_token = gigya.get_jwt(uid)
+        
+        #get token
+        try:
+            user_token = get_user_jwt_token()
+        except ValueError as e:
+            common.popup(e) # warn user
+            return
 
         favorites =  api.get_user_favorites(user_token)
 
@@ -639,15 +677,6 @@ def podcast_to_kodi_item(node,args={}):
     }
 
     return li
-
-def user_has_account():
-    user_login = Addon().get_setting('email')
-    user_pwd = Addon().get_setting('password')
-    
-    if user_login and user_pwd:
-        return True
-    else:
-        return False
 
 # Start plugin from within Kodi.
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ import socket
 # Add the /lib folder to sys
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
+# Plugin modules
 import common
 import api
 
@@ -77,11 +78,10 @@ def request_url(url, params={}, headers={}):
         common.plugin.log('generic exception: ' + traceback.format_exc())
         raise
 
-
 def now():
   return datetime.datetime.now(dateutil.tz.tzlocal())
 
-def is_live_media(node):
+def is_live_media(node): #TOFIX TOCHECK planning_id ?
 
     start_date = node.get('start_date',None)
     end_date = node.get('end_date',None)

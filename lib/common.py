@@ -18,9 +18,7 @@ sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.au
 # SimplePlugin
 from simpleplugin import Plugin
 from simpleplugin import Addon
-
-# Create plugin instance
-plugin = Plugin()
+plugin = Plugin() # Create plugin instance
 
 rtbf_url = 'http://www.rtbf.be/'
 cryo_base_url = rtbf_url + "api/partner/generic/"
