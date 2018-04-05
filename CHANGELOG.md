@@ -1,5 +1,14 @@
 # Changelog
 
+## v3.1.5
+Released 5 April 2018
+* support for Auvio accounts
+* menu hierarchy now closer to official Auvio App
+* notices for DRM medias (currently unplayable; see https://github.com/rickybiscus/plugin.video.auvio/issues/9) 
+* removed scraper, now only relies on API
+* removed script.module.beautifulsoup4 dependency
+* more code cleanup & improvements
+
 ## v3.1.0
 Released 28 August 2017
 * Download medias
