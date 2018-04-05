@@ -365,9 +365,11 @@ def play_media(params):
     if drm:
         common.popup("Impossible actuellement de jouer des fichiers protégés par DRM.")
         return False
+
     
     #get media details
     media = api.get_media_details(mid,is_live)
+    common.plugin.log(json.dumps(media))
     
     #get media stream URL
     media_url = None
@@ -381,7 +383,7 @@ def play_media(params):
         #regular media
         else:
             media_url = stream_node.get('url','').encode('utf-8').strip()
-            
+    
     if not media_url:
         common.plugin.log_error("unable to get stream URL.")
         common.popup("Impossible de trouver le flux media")
@@ -402,7 +404,6 @@ def play_media(params):
         
         auth = api.get_drm_media_auth(user_token,mid,is_live)
         #common.popup("media #{0} auth: {1}".format(mid,auth))
-        common.plugin.log("media #{0} auth: {1}".format(mid,auth))
         
     #play
     liz = xbmcgui.ListItem(path=media_url)

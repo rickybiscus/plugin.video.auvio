@@ -237,8 +237,14 @@ def get_user_favorites(user_token, type='media', offset = None,limit = None):
 
 
 #Get the encoded authorisation XML for medias that have a DRM
-def get_drm_media_auth(user_token,media_id,is_live=False):
+def get_drm_media_auth(user_token,mid,is_live=False):
     
+        #Return base64 encoded KeyOS authentication XML (Widevine)
+        
+        #https://www.buydrm.com/multikey-demo
+        #https://bitmovin.com/mpeg-dash-hls-drm-test-player/
+        #http://dashif.org/reference/players/javascript/v2.4.1/samples/dash-if-reference-player/index.html
+
         url = common.cryo_base_url + 'drm/encauthxml'
         url_params = {
             'partner_key':  common.cryo_partner_key,
@@ -247,9 +253,9 @@ def get_drm_media_auth(user_token,media_id,is_live=False):
         
         #live ?
         if is_live:
-            url_params['planning_id'] = media_id
+            url_params['planning_id'] = mid
         else:
-            url_params['media_id'] = media_id
+            url_params['media_id'] = mid
         
         url_headers = {
             'Authorization':    "Bearer " + user_token,
@@ -258,7 +264,13 @@ def get_drm_media_auth(user_token,media_id,is_live=False):
         json_data = utils.request_url(url,url_params,url_headers)
         
         if json_data:
+
             data = json.loads(json_data)
-            return data.get('auth_encoded_xml')
+            auth = data.get('auth_encoded_xml')
+
+            common.plugin.log("media #{0} auth: {1}".format(mid,auth))
+            
+            return auth
+            
         
         return None
