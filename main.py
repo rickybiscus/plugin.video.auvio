@@ -286,11 +286,11 @@ def menu_channels(params):
 def menu_live(params):
 
     listing = []
-    nodes = api.get_live_videos()
+    live_medias = api.get_live_videos()
     
-    if nodes and len(nodes):
-        for node in nodes:
-            li = media_to_kodi_item(node)
+    if live_medias and len(live_medias):
+        for live_media in live_medias:
+            li = media_to_kodi_item(live_media)
             listing.append(li)  # Item label
 
     sortable_by = (xbmcplugin.SORT_METHOD_DATE,
@@ -556,16 +556,20 @@ def category_to_kodi_item(category):
     }
     return li
 
-def media_to_kodi_item(node):
+def media_to_kodi_item(media):
     
-    #common.plugin.log(json.dumps(node))
+    #common.plugin.log(json.dumps(media))
 
     context_actions = [] #context menu actions
+    
+    #MEDIA TYPE
+    media_type = media.get('type')
+    kodi_type = utils.get_kodi_media_type(media)
 
     #build label
-    title = node.get('title','').encode('utf-8').strip()
-    subtitle = node.get('subtitle','').encode('utf-8').strip()
-    channel_node = node.get('channel')
+    title = media.get('title','').encode('utf-8').strip()
+    subtitle = media.get('subtitle','').encode('utf-8').strip()
+    channel_node = media.get('channel')
 
     if channel_node:
         channel = channel_node.get('label','').encode('utf-8').strip()
@@ -574,49 +578,59 @@ def media_to_kodi_item(node):
     if subtitle:
         title = "{0} - [I]{1}[/I]".format(title,subtitle)
 
-    if node.get('type') == 'livevideo':
-        if utils.is_live_media(node):
+    #live video
+    if media_type == 'livevideo':
+        if utils.is_live_stream(media):
             title += ' [COLOR yellow]direct[/COLOR]'
         else:
-            stream_start = utils.get_stream_start_date_formatted(node.get('start_date',None))
+            stream_start = utils.get_stream_start_date_formatted(media.get('start_date',None))
             title += ' [COLOR red]' + stream_start + '[/COLOR]'
 
-    #kodi type
-    media_type = node.get('type')
-    
-    #media infos
+    #MEDIA INFOS
     #http://romanvm.github.io/script.module.simpleplugin/_actions/vf.html
     #http://kodi.wiki/view/InfoLabels#ListItem
     
-    infos = {
-        #'date':         utils.datetime_W3C_to_kodi(node.get('date_publish_from')), #file date
-        'count':        node.get('id'), #can be used to store an id for later, or for sorting purposes
-        'duration':     int(round(node.get('duration',0))),
+    infos = {}
+    info_details = {
+        #'date':         utils.datetime_W3C_to_kodi(media.get('date_publish_from')), #file date
+        'count':        media.get('id'), #can be used to store an id for later, or for sorting purposes
+        'duration':     utils.get_kodi_media_duration(media),
     }
     
-    if media_type=='video' or media_type=='livevideo':
-        kodi_type = 'video'
-        infos_video = {
-            'aired':        utils.datetime_W3C_to_kodi(node.get('date_publish_from')),
-            'genre':        node.get('category',{}).get('label','').encode('utf-8'),
-            'plot':         node.get('description','').encode('utf-8'),#Long Description
-            'plotoutline':  node.get('description','').encode('utf-8'),#Short Description
+    if kodi_type=='video':
+        
+        video_infos = {
+            'aired':        utils.datetime_W3C_to_kodi(media.get('date_publish_from')),
+            'genre':        media.get('category',{}).get('label','').encode('utf-8'),
+            'plot':         media.get('description','').encode('utf-8'),#Long Description
+            'plotoutline':  media.get('description','').encode('utf-8'),#Short Description
         }
-        infos.update(infos_video) #merge arrays
         
+        #parse args
+        info_details = utils.parse_dict_args(info_details,video_infos)
         
-    if media_type=='audio' or media_type=='radio':
-        kodi_type = 'music'
-        infos_audio = {
-            'genre':        node.get('category',{}).get('label').encode('utf-8'),
+        infos = {
+            'video': info_details
         }
-        infos.update(infos_audio) #merge arrays
+
+    
+    elif kodi_type=='music':
+        music_infos = {
+            'genre':        media.get('category',{}).get('label').encode('utf-8'),
+        }
         
+        #parse args
+        info_details = utils.parse_dict_args(info_details,music_infos)
+        
+        infos = {
+            'music': info_details
+        }
+ 
     #stream URL
     media_url = ''
-    stream_node = node.get('url_streaming')
+    stream_node = media.get('url_streaming')
 
-    if media_type=='livevideo' and utils.is_live_media(node): #TO FIX maybe show teaser insetad nothing ?
+    if media_type=='livevideo' and utils.is_live_stream(media): #TO FIX maybe show teaser instead nothing ?
         if stream_node:
             media_url = stream_node.get('url_hls','').encode('utf-8').strip()
             
@@ -636,40 +650,38 @@ def media_to_kodi_item(node):
     li = {
         'label':    title,
         'label2':   subtitle,
-        'thumb':    node.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370','').encode('utf-8').strip(),
-        'fanart':   node.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip(),
+        'thumb':    media.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370','').encode('utf-8').strip(),
+        'fanart':   media.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip(),
         'url':      common.plugin.get_url(action='stream_url',url=media_url),
-        'info': {
-            kodi_type: infos
-        },
+        'info':     infos,
         'is_playable':  True,
         'context_menu': context_actions
     }
 
     return li
 
-def podcast_to_kodi_item(node,args={}):
+def podcast_to_kodi_item(media,args={}):
     
     context_actions = [] #context menu actions
     
     #media URL
-    media_url = node.get('stream_url','')
+    media_url = media.get('stream_url','')
     
     #Download
     if media_url:
-        file_title = node.get('title')
+        file_title = media.get('title')
         action_download =  context_action_download(file_title,media_url)
         context_actions.append(action_download)
     
     li = {
-        'label':    node.get('title'),
-        'thumb':    node.get('image',''),
+        'label':    media.get('title'),
+        'thumb':    media.get('image',''),
         'url':      common.plugin.get_url(action='stream_url',url=media_url),
         'info': {
             'music': {
-                'date':         node.get('pubdate'),
-                #'aired':        utils.datetime_W3C_to_kodi(node.get('start_date')),
-                'duration':     node.get('duration',''),
+                'date':         media.get('pubdate'),
+                #'aired':        utils.datetime_W3C_to_kodi(media.get('start_date')),
+                'duration':     media.get('duration',''),
             }
         },
         'is_playable':  True,
