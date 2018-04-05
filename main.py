@@ -365,7 +365,6 @@ def play_media(params):
     if drm:
         common.popup("Impossible actuellement de jouer des fichiers protégés par DRM.")
         return False
-
     
     #get media details
     media = api.get_media_details(mid,is_live)
@@ -707,7 +706,7 @@ def media_to_kodi_item(media):
         }
  
     #download context menu
-    if not is_livemedia:
+    if not is_livemedia and not has_drm:
         download_action = (
             'Télécharger', 
             'XBMC.RunPlugin(%s)' % common.plugin.get_url(action='download_media',media_id=mid)
