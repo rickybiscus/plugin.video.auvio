@@ -2,7 +2,7 @@
 <settings>
     <!-- GENERAL -->
     <category label="Général">
-        <setting label="Mon Auvio (pas encore exploité par l'addon)" type="lsep" />
+        <setting label="Mon Auvio" type="lsep" />
         <setting label="Adresse email" id="email" type="text"/>
         <setting label="Mot de passe" id="password" type="text" option="hidden"/>
         <setting label="Affichage" type="lsep" />

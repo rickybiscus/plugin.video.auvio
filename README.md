@@ -6,7 +6,7 @@ Contributions are welcome:
 https://github.com/rickybiscus/plugin.video.auvio
 
 ## Features
-* Main menu : 'En direct', 'Chaînes', 'Émissions', 'Catégories', 'Sélection'
+* Main menu : 'En direct', 'Accueil', 'Chaînes', 'Catégories', 'Mon Auvio'
 * Stream live videos and radios, video replays and audio podcasts
 
 ## Installation
