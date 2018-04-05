@@ -56,6 +56,7 @@ def get_menu_channels():
 
 @common.plugin.cached(common.cachetime_app_settings)
 def get_channel_list(url_params={}):
+    
     #Get ALL the channels from the API (not only the menu ones), including radios.  Can be filtered through optionnal url parameters.
     
     #url params
@@ -77,6 +78,25 @@ def get_channel_list(url_params={}):
     data = json.loads(json_data)
 
     return data
+
+def get_single_channel(cid,url_params={}):
+    
+    #return a single channel
+
+    url_params['id'] = cid #set/override channel ID in URL params
+    channels = get_channel_list(url_params)
+    
+    if not channels:
+        return
+    
+    filtered = [ch for ch in channels if ch['id']==cid]
+    
+    if not filtered:
+        return
+    
+    #return first one
+    return filtered[0]
+    
 
 @common.plugin.cached(common.cachetime_medias_recent)
 def get_sidebar_widget_list(sidebar_id):
@@ -122,22 +142,24 @@ def get_widget_detail(widget_id):
     return data
 
 @common.plugin.cached(common.cachetime_media_data)
-def get_media_details(id):
-    """
-    Get the media details by a ID from the API.  If the type is None, we'll try to query both methods.
-    """
+def get_media_details(mid,live=False):
+    # Get the media details by a ID from the API
     
     common.plugin.log('get_media_details')
 
-    url = common.cryo_base_url + 'media/objectdetail'
+    if live:
+        url = common.cryo_base_url + 'live/planningdetail'
+    else:
+        url = common.cryo_base_url + 'media/objectdetail'
+        
     url_params = {
         'partner_key':  common.cryo_partner_key,
-        'v':            7,
+        'v':            8,
         'target_site':  'mediaz',
-        'id':           id,
+        'id':           mid
     }
 
-    common.plugin.log("get_media_details for ID:%s" % (id))
+    common.plugin.log("api.get_media_details media #{0} - is live:{1}".format(mid,live))
 
     try:
         json_data = utils.request_url(url,url_params)
@@ -147,8 +169,7 @@ def get_media_details(id):
         data = json.loads(json_data)
 
     except:
-
-        common.plugin.log_error('Unable to get media details for %s #%s' % (id))
+        common.plugin.log_error("api.get_media_details - failed for media #{0}".format(mid))
         return None
 
     common.plugin.log(json.dumps(data))
@@ -213,3 +234,31 @@ def get_user_favorites(user_token, type='media', offset = None,limit = None):
     common.plugin.log('api.get_user_favorites: found %d nodes' % len(nodes))
     
     return nodes
+
+
+#Get the encoded authorisation XML for medias that have a DRM
+def get_drm_media_auth(user_token,media_id,is_live=False):
+    
+        url = common.cryo_base_url + 'drm/encauthxml'
+        url_params = {
+            'partner_key':  common.cryo_partner_key,
+            'v':            8,
+        }
+        
+        #live ?
+        if is_live:
+            url_params['planning_id'] = media_id
+        else:
+            url_params['media_id'] = media_id
+        
+        url_headers = {
+            'Authorization':    "Bearer " + user_token,
+        }
+        
+        json_data = utils.request_url(url,url_params,url_headers)
+        
+        if json_data:
+            data = json.loads(json_data)
+            return data.get('auth_encoded_xml')
+        
+        return None

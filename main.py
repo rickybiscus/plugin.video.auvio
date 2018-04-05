@@ -196,7 +196,7 @@ def menu_favorites(params):
         
         listing = []
         
-        #get token
+        #get user token
         try:
             user_token = get_user_jwt_token()
         except ValueError as e:
@@ -326,29 +326,92 @@ def menu_homepage(params):
         #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
         #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
     )
-    
 
 @common.plugin.action()
-def stream_url(params):
+def play_radio(params):
     
-    url = params.get('url',None)
-    common.plugin.log("stream_url() url:%s" % (url))
+    cid = int(params.get('channel_id',None))
+    media_url = None
+    
+    common.plugin.log("play_radio #{0}".format(cid))
 
-    if not url:
-        common.popup("Impossible de lire ce flux")
-        plugin.log_error("Impossible de lire ce flux")
-        return
+    channel = api.get_single_channel(cid)
+    
+    if channel:
+        common.plugin.log(json.dumps(channel))
+        stream_node = channel.get('streamurl',None)
+
+        if stream_node:
+            media_url = stream_node.get('mp3','').encode('utf-8').strip()
         
-    liz = xbmcgui.ListItem(path=url)
+    if not media_url:
+        common.plugin.log_error("unable to get stream URL.")
+        common.popup("Impossible de trouver le flux media")
+        
+    #play
+    liz = xbmcgui.ListItem(path=media_url)
+    return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
+
+@common.plugin.action()
+def play_media(params):
+    mid = int(params.get('media_id',None))
+    is_live = ( params.get('livemedia','') == 'True' )
+    drm = ( params.get('drm','') == 'True' )
+    
+    #common.popup("play media #{0} - live:{1} - drm:{2}".format(mid,is_live,drm))
+    common.plugin.log("play media #{0} - live:{1} - drm:{2}".format(mid,is_live,drm))
+    
+    #TOFIX DRM
+    if drm:
+        common.popup("Impossible actuellement de jouer des fichiers protégés par DRM.")
+        return False
+    
+    #get media details
+    media = api.get_media_details(mid,is_live)
+    
+    #get media stream URL
+    media_url = None
+    stream_node = media.get('url_streaming')
+    
+    if stream_node:
+        #live media streaming
+        if is_live and utils.media_is_streaming(media):
+            media_url = stream_node.get('url_hls','').encode('utf-8').strip()
+
+        #regular media
+        else:
+            media_url = stream_node.get('url','').encode('utf-8').strip()
+            
+    if not media_url:
+        common.plugin.log_error("unable to get stream URL.")
+        common.popup("Impossible de trouver le flux media")
+        return False #TOFIX how to cancel media play ?
+    
+    common.plugin.log(media_url)
+    #common.popup(media_url)
+
+    #get auth
+    if drm:
+
+        #get user token
+        try:
+            user_token = get_user_jwt_token()
+        except ValueError as e:
+            common.popup(e) # warn user
+            return False #TOFIX how to cancel media play ?
+        
+        auth = api.get_drm_media_auth(user_token,mid,is_live)
+        #common.popup("media #{0} auth: {1}".format(mid,auth))
+        common.plugin.log("media #{0} auth: {1}".format(mid,auth))
+        
+    #play
+    liz = xbmcgui.ListItem(path=media_url)
     return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
 
 @common.plugin.action()
 def download_media(params):
     
     from slugify import slugify
-    
-    title=  params.get('title');
-    url=    params.get('url');
     
     #validate path
     download_folder = Addon().get_setting('download_folder')
@@ -357,23 +420,42 @@ def download_media(params):
         common.popup("Veuillez configurer un répertoire de téléchargement dans les paramètres du plugin")
         common.plugin.log_error("download_media: No directory set")
         return False
+    
+    #get media details
+    mid = int(params.get('media_id',None))
+    media = api.get_media_details(mid)
+    media_title = media.get('title')
+    media_subtitle = media.get('subtitle')
+    
+    #media URL
+    stream_node = media.get('url_streaming')
 
-    if not url:
-        common.popup("Impossible de télécharger ce média")
-        plugin.log_error("download_media: Missing URL")
+    if stream_node:
+        media_url = stream_node.get('url','').encode('utf-8').strip()
+        
+    if not media_url:
+        common.plugin.log_error("unable to get stream URL.")
+        common.popup("Impossible de trouver le flux media")
         return False
 
     #filename
-    remote_path = urlparse.urlparse(url).path #full path
-    remote_file = url.rsplit('/', 1)[-1] #only what's after the last '/'
+    remote_path = urlparse.urlparse(media_url).path #full path
+    remote_file = media_url.rsplit('/', 1)[-1] #only what's after the last '/'
     remote_filename = os.path.splitext(remote_file)[0]
     remote_ext = os.path.splitext(remote_file)[1]
     
-    file_name = slugify(title) + remote_ext
+    if media_subtitle:
+        file_title = "%s - %s" % (media_title,media_subtitle)
+    else:
+        file_title = media_title
+        
+    file_title = slugify(file_title)
+        
+    file_name = file_title + remote_ext
     file_path = xbmc.makeLegalFilename(os.path.join(download_folder, file_name))
     file_path = urllib2.unquote(file_path)
 
-    common.plugin.log('download_media - filename: %s from %s' % (file_name,url))
+    common.plugin.log("download_media #{0} - filename:{1} - from:{2}".format(mid,file_name,media_url))
     
     # Overwrite existing file?
     if os.path.isfile(file_path):
@@ -387,7 +469,7 @@ def download_media(params):
     size = 1024 * 1024
     start = time.clock()
     f = open(file_path, 'wb')
-    u = urllib2.urlopen(url)
+    u = urllib2.urlopen(media_url)
     bytes_so_far = 0
     error = False
 
@@ -440,12 +522,6 @@ def download_media(params):
         xbmc.sleep(1000)
         
     progressdialog.close()
-
-def context_action_download(title,url):
-    return (
-        'Télécharger', 
-        'XBMC.RunPlugin(%s)' % common.plugin.get_url(action='download_media',title=title,url=url)
-    )
 
 def get_sidebar_listing(sid):
     
@@ -507,16 +583,11 @@ def get_subradio_listing(cid):
     if subchannels:
         for channel in subchannels:
             
-            #stream URL
-            channel_url = ''
-            streamurl = channel.get('streamurl',None)
-            if streamurl:
-                media_url = streamurl.get('mp3','').encode('utf-8').strip()
-                channel_url = common.plugin.get_url(action='stream_url',url=media_url)
+            cid = channel.get('id',None)
 
             li = {
                 'label':    channel.get('name').encode('utf-8').strip(),
-                'url':      channel_url,
+                'url':      common.plugin.get_url(action='play_radio',channel_id=cid),
                 'thumb':    channel.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370',None).encode('utf-8').strip(),
                 'fanart':   channel.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080',None).encode('utf-8').strip(),
                 'is_playable':  True
@@ -562,9 +633,12 @@ def media_to_kodi_item(media):
 
     context_actions = [] #context menu actions
     
-    #MEDIA TYPE
+    #MEDIA
+    mid = media.get('id')
     media_type = media.get('type')
+    is_livemedia = (media_type == 'livevideo')
     kodi_type = utils.get_kodi_media_type(media)
+    has_drm = media.get('drm')
 
     #build label
     title = media.get('title','').encode('utf-8').strip()
@@ -577,14 +651,19 @@ def media_to_kodi_item(media):
 
     if subtitle:
         title = "{0} - [I]{1}[/I]".format(title,subtitle)
+        
+    #TOFIX DRM
+    if has_drm:
+        title = "[COLOR red]DRM[/COLOR] " + title
 
     #live video
-    if media_type == 'livevideo':
-        if utils.is_live_stream(media):
+    if is_livemedia:
+        if utils.media_is_streaming(media):
             title += ' [COLOR yellow]direct[/COLOR]'
         else:
             stream_start = utils.get_stream_start_date_formatted(media.get('start_date',None))
             title += ' [COLOR red]' + stream_start + '[/COLOR]'
+
 
     #MEDIA INFOS
     #http://romanvm.github.io/script.module.simpleplugin/_actions/vf.html
@@ -626,64 +705,21 @@ def media_to_kodi_item(media):
             'music': info_details
         }
  
-    #stream URL
-    media_url = ''
-    stream_node = media.get('url_streaming')
-
-    if media_type=='livevideo' and utils.is_live_stream(media): #TO FIX maybe show teaser instead nothing ?
-        if stream_node:
-            media_url = stream_node.get('url_hls','').encode('utf-8').strip()
-            
-    elif media_type=='video' or media_type=='audio':
-        if stream_node:
-            media_url = stream_node.get('url','').encode('utf-8').strip()
-        if media_url: #Download
-            
-            if subtitle:
-                file_title = "%s - %s" % (title,subtitle)
-            else:
-                file_title = title
-
-            action_download =  context_action_download(file_title,media_url)
-            context_actions.append(action_download)
+    #download context menu
+    if not is_livemedia:
+        download_action = (
+            'Télécharger', 
+            'XBMC.RunPlugin(%s)' % common.plugin.get_url(action='download_media',media_id=mid)
+        )
+        context_actions.append(download_action)
 
     li = {
         'label':    title,
         'label2':   subtitle,
         'thumb':    media.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370','').encode('utf-8').strip(),
         'fanart':   media.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip(),
-        'url':      common.plugin.get_url(action='stream_url',url=media_url),
+        'url':      common.plugin.get_url(action='play_media',media_id=mid,livemedia=is_livemedia,drm=has_drm),
         'info':     infos,
-        'is_playable':  True,
-        'context_menu': context_actions
-    }
-
-    return li
-
-def podcast_to_kodi_item(media,args={}):
-    
-    context_actions = [] #context menu actions
-    
-    #media URL
-    media_url = media.get('stream_url','')
-    
-    #Download
-    if media_url:
-        file_title = media.get('title')
-        action_download =  context_action_download(file_title,media_url)
-        context_actions.append(action_download)
-    
-    li = {
-        'label':    media.get('title'),
-        'thumb':    media.get('image',''),
-        'url':      common.plugin.get_url(action='stream_url',url=media_url),
-        'info': {
-            'music': {
-                'date':         media.get('pubdate'),
-                #'aired':        utils.datetime_W3C_to_kodi(media.get('start_date')),
-                'duration':     media.get('duration',''),
-            }
-        },
         'is_playable':  True,
         'context_menu': context_actions
     }
