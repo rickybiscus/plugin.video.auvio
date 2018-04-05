@@ -120,13 +120,13 @@ def get_kodi_media_duration(media):
             
     return int(round(duration))
 
-def is_live_stream(media):
+def media_is_streaming(media):
 
     start_date = media.get('start_date',None)
     end_date = media.get('end_date',None)
     
     if not start_date or not end_date:
-        common.plugin.log_error('utils.is_live_stream() : missing start_date or end_date')
+        common.plugin.log_error('utils.media_is_streaming() : missing start_date or end_date')
         return
 
     now_datetime = now()
