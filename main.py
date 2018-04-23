@@ -400,6 +400,24 @@ def play_media(params):
 
     #build playable item
     liz = xbmcgui.ListItem(path=media_url)
+    
+    """
+    #TOFIX WIP additional code for the DRMs (requires Kodi Leia) - commented as we don't need it yet; but keep it here so we don't forget it meanwhile.
+    if drm:
+        #get user token
+        try:
+            user_token = get_user_jwt_token()
+        except ValueError as e:
+            common.popup(e)  # warn user
+            return False  # TOFIX how to cancel media play ?
+
+        #get base64 licence
+        auth = api.get_drm_media_auth(user_token, mid, is_live)
+        common.plugin.log("media #{0} auth: {1}".format(mid,auth))
+        
+        #TOFIX!!!
+        
+    """
 
     #return playable item
     return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
