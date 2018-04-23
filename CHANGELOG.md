@@ -2,6 +2,7 @@
 
 ## v3.1.6
 * Temporary DRM fix
+* New option: display a 'DRM' prefix for protected medias.
 
 ## v3.1.5
 Released 5 April 2018
