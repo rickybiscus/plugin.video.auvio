@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.1.6
+* Temporary DRM fix
+
 ## v3.1.5
 Released 5 April 2018
 * support for Auvio accounts
