@@ -376,17 +376,8 @@ def play_media(params):
         else:
             #drm protected
             if drm:
-
                 media_url = stream_node.get('url_hls','').encode('utf-8').strip()
-                
-                """
-                Update drm-protected URL so it match the property 'urlHlsAes128' 
-                #at http://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE;
-                #Which is DRM-free.
-                """
-
-                media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
-                common.plugin.log("drm-free URL : {0}".format(media_url))
+                #drm_key = media.get('drm_key_public_keyos','').encode('utf-8').strip() #TOFIX TOCHECK used in android app ?
 
             #regular media
             else:
@@ -402,6 +393,47 @@ def play_media(params):
 
     #build playable item
     liz = xbmcgui.ListItem(path=media_url)
+
+    #get auth
+    if drm:
+
+        #get user token
+        try:
+            user_token = get_user_jwt_token()
+        except ValueError as e:
+            common.popup(e)  # warn user
+            return False  # TOFIX how to cancel media play ?
+
+        auth = api.get_drm_media_auth(user_token, mid, is_live)
+        # common.popup("media #{0} auth: {1}".format(mid,auth))
+
+        # you should activate inputstreamaddon in kodi
+        # and add needed libs (ssd_wv.dll or .so, widevinecdm.dll or .so)
+        # in the cdm folder in special://home.
+        liz.setProperty('inputstreamaddon', 'inputstream.adaptive')
+        liz.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
+        liz.setProperty('inputstream.adaptive.manifest_type', 'hls')
+        
+        # Get DRM url from settings
+        # TOFIX should be populated when initializing addon ?
+        app_datas = api.get_app_settings()
+        licence_url = app_datas['media_drm_url']['widevine_url']
+
+        # Template:  URL|Additional Header|Post-Body|Response Format
+        # Additional Header : customData is auth in base64
+        # Post-Body: R{SSM} -> Raw SendSessionMessage (== Raw Bytes in Post Body)
+        # Response format: by default: expect raw bytes in response payload -> leave empty
+
+        licence_url = licence_url + '|customData=' + auth + '|R{SSM}|'
+        # licence_url = 'http://wv-keyos.licensekeyserver.com||R{SSM}|R'
+
+        url__format = "DRM : {0}".format(licence_url)
+        common.popup(url__format)
+        common.plugin.log_notice(url__format)
+
+        liz.setProperty('inputstream.adaptive.license_key', licence_url)
+        liz.setMimeType('application/dash+xml')
+        liz.setContentLookup(False)
 
     #return playable item
     return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
