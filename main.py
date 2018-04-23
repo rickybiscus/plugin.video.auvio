@@ -360,12 +360,7 @@ def play_media(params):
     
     #common.popup("play media #{0} - live:{1} - drm:{2}".format(mid,is_live,drm))
     common.plugin.log("play media #{0} - live:{1} - drm:{2}".format(mid,is_live,drm))
-    
-    #TOFIX DRM
-    if drm:
-        common.popup("Impossible actuellement de jouer des fichiers protégés par DRM.")
-        return False
-    
+
     #get media details
     media = api.get_media_details(mid,is_live)
     common.plugin.log(json.dumps(media))
@@ -375,37 +370,40 @@ def play_media(params):
     stream_node = media.get('url_streaming')
     
     if stream_node:
-        #live media streaming
+        #live media streaming - can be played without DRM licence
         if is_live and utils.media_is_streaming(media):
             media_url = stream_node.get('url_hls','').encode('utf-8').strip()
-
-        #regular media
         else:
-            media_url = stream_node.get('url','').encode('utf-8').strip()
-    
+            #drm protected
+            if drm:
+
+                media_url = stream_node.get('url_hls','').encode('utf-8').strip()
+                
+                """
+                Update drm-protected URL so it match the property 'urlHlsAes128' 
+                #at http://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE;
+                #Which is DRM-free.
+                """
+
+                media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
+                common.plugin.log("drm-free URL : {0}".format(media_url))
+
+            #regular media
+            else:
+                media_url = stream_node.get('url','').encode('utf-8').strip()
+
     if not media_url:
         common.plugin.log_error("unable to get stream URL.")
         common.popup("Impossible de trouver le flux media")
         return False #TOFIX how to cancel media play ?
-    
+
     common.plugin.log(media_url)
     #common.popup(media_url)
 
-    #get auth
-    if drm:
-
-        #get user token
-        try:
-            user_token = get_user_jwt_token()
-        except ValueError as e:
-            common.popup(e) # warn user
-            return False #TOFIX how to cancel media play ?
-        
-        auth = api.get_drm_media_auth(user_token,mid,is_live)
-        #common.popup("media #{0} auth: {1}".format(mid,auth))
-        
-    #play
+    #build playable item
     liz = xbmcgui.ListItem(path=media_url)
+
+    #return playable item
     return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
 
 @common.plugin.action()
