@@ -652,8 +652,8 @@ def media_to_kodi_item(media):
     if subtitle:
         title = "{0} - [I]{1}[/I]".format(title,subtitle)
         
-    #TOFIX DRM
-    if has_drm:
+    #Add 'DRM' prefix
+    if has_drm and Addon().get_setting('drm_title_prefix'):
         title = "[COLOR red]DRM[/COLOR] " + title
 
     #live video
