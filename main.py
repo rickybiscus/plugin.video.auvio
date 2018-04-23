@@ -363,7 +363,7 @@ def play_media(params):
 
     #get media details
     media = api.get_media_details(mid,is_live)
-    common.plugin.log(json.dumps(media))
+    common.plugin.log("media #{0} datas: {1}".format(mid,json.dumps(media)))
     
     #get media stream URL
     media_url = None
@@ -388,8 +388,7 @@ def play_media(params):
         common.popup("Impossible de trouver le flux media")
         return False #TOFIX how to cancel media play ?
 
-    common.plugin.log(media_url)
-    #common.popup(media_url)
+    common.plugin.log("media #{0} url: {1}".format(mid,media_url))
 
     #build playable item
     liz = xbmcgui.ListItem(path=media_url)
@@ -405,7 +404,7 @@ def play_media(params):
             return False  # TOFIX how to cancel media play ?
 
         auth = api.get_drm_media_auth(user_token, mid, is_live)
-        # common.popup("media #{0} auth: {1}".format(mid,auth))
+        common.plugin.log("media #{0} auth: {1}".format(mid,auth))
 
         # you should activate inputstreamaddon in kodi
         # and add needed libs (ssd_wv.dll or .so, widevinecdm.dll or .so)
