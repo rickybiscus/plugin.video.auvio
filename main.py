@@ -358,12 +358,11 @@ def play_media(params):
     is_live = ( params.get('livemedia','') == 'True' )
     drm = ( params.get('drm','') == 'True' )
     
-    #common.popup("play media #{0} - live:{1} - drm:{2}".format(mid,is_live,drm))
     common.plugin.log("play media #{0} - live:{1} - drm:{2}".format(mid,is_live,drm))
 
     #get media details
     media = api.get_media_details(mid,is_live)
-    common.plugin.log(json.dumps(media))
+    common.plugin.log("media #{0} datas: {1}".format(mid,json.dumps(media)))
     
     #get media stream URL
     media_url = None
@@ -381,12 +380,12 @@ def play_media(params):
                 
                 """
                 Update drm-protected URL so it match the property 'urlHlsAes128' 
-                #at http://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE;
-                #Which is DRM-free.
+                at http://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE;
+                which is DRM-free.
                 """
 
                 media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
-                common.plugin.log("drm-free URL : {0}".format(media_url))
+                common.plugin.log("media #{0} drm-free stream url: {1}".format(mid,media_url))
 
             #regular media
             else:
@@ -397,8 +396,7 @@ def play_media(params):
         common.popup("Impossible de trouver le flux media")
         return False #TOFIX how to cancel media play ?
 
-    common.plugin.log(media_url)
-    #common.popup(media_url)
+    common.plugin.log("media #{0} stream url: {1}".format(mid,media_url))
 
     #build playable item
     liz = xbmcgui.ListItem(path=media_url)
@@ -489,7 +487,7 @@ def download_media(params):
     while True:
         
         # Aborded by user
-        if (progressdialog.iscanceled()):
+        if progressdialog.iscanceled():
             error = True
             break
         

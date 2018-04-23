@@ -34,7 +34,7 @@ def parse_dict_args(x, y):
 def request_url(url, params={}, headers={}):
     
     #URL parameters
-    if (params):
+    if params:
         params_str = urllib.urlencode(params)
         url = url + '?' + params_str
         
