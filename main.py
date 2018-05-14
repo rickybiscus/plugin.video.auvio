@@ -555,12 +555,13 @@ def get_sidebar_listing(sid):
             widget_metas = widget_details.get('widget_meta')
             widget_blocks = widget_details.get('widget_blocks')
             
-            section_count = len(widget_metas);
-            
+            if widget_metas:
+                section_count = len(widget_metas);
+                
             if section_count:
                 current_section = 0;
                 while current_section < section_count:
-                    
+
                     try:
                         blocks = widget_blocks[current_section]
                     except IndexError:

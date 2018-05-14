@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.1.7
+* Fix crash when an api widget does not have content
+
 ## v3.1.6
 * Temporary DRM fix
 * New option: display a 'DRM' prefix for protected medias.
