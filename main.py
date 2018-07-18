@@ -369,27 +369,13 @@ def play_media(params):
     stream_node = media.get('url_streaming')
     
     if stream_node:
-        #live media streaming - can be played without DRM licence
-        if is_live and utils.media_is_streaming(media):
-            media_url = stream_node.get('url_hls','').encode('utf-8').strip()
-        else:
-            #drm protected
-            if drm:
-
-                media_url = stream_node.get('url_hls','').encode('utf-8').strip()
-                
-                """
-                Update drm-protected URL so it match the property 'urlHlsAes128' 
-                at http://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE;
-                which is DRM-free.
-                """
-
-                media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
-                common.plugin.log("media #{0} drm-free stream url: {1}".format(mid,media_url))
-
-            #regular media
-            else:
-                media_url = stream_node.get('url','').encode('utf-8').strip()
+        media_url = stream_node.get('url_hls','').encode('utf-8').strip()
+        # live
+        if "_drm.m3u8" in media_url:
+            media_url = media_url.replace('_drm.m3u8','_aes.m3u8')
+        # VOD
+        elif "master.m3u8" in media_url:
+            media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
 
     if not media_url:
         common.plugin.log_error("unable to get stream URL.")
