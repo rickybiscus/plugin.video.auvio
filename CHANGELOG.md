@@ -1,10 +1,14 @@
 # Changelog
 
+## v3.1.8
+Released 18 July 2018
+* Temporary DRM bypass (by mokhito)
+
 ## v3.1.7
 * Fix crash when an api widget does not have content
 
 ## v3.1.6
-* Temporary DRM fix
+* Temporary DRM bypass
 * New option: display a 'DRM' prefix for protected medias.
 
 ## v3.1.5
