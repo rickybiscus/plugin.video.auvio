@@ -345,8 +345,8 @@ def play_radio(params):
             media_url = stream_node.get('mp3','').encode('utf-8').strip()
         
     if not media_url:
-        common.plugin.log_error("unable to get stream URL.")
-        common.popup("Impossible de trouver le flux media")
+        common.plugin.log_error("unable to get the radio stream URL.")
+        common.popup("Impossible de trouver le flux radio")
         
     #play
     liz = xbmcgui.ListItem(path=media_url)
@@ -354,15 +354,19 @@ def play_radio(params):
 
 @common.plugin.action()
 def play_media(params):
-    mid = int(params.get('media_id',None))
-    is_live = ( params.get('livemedia','') == 'True' )
-    drm = ( params.get('drm','') == 'True' )
     
-    common.plugin.log("play media #{0} - live:{1} - drm:{2}".format(mid,is_live,drm))
+    mid = int(params.get('media_id',None))
+    is_livevideo = ( params.get('livevideo','') == 'True' )
+    
+    common.plugin.log("play media #{0} - live:{1}".format(mid,is_livevideo))
 
     #get media details
-    media = api.get_media_details(mid,is_live)
+    media = api.get_media_details(mid,is_livevideo)
+    media_type = media.get('type')
+    has_drm = media.get('drm')
+    
     common.plugin.log("media #{0} datas: {1}".format(mid,json.dumps(media)))
+    
     
     #get media stream URL
     media_url = None
@@ -380,14 +384,13 @@ def play_media(params):
         
         (DRM code for further use:)
         
-        if drm:
+        if has_drm:
             #get user token
             try:
                 user_token = get_user_jwt_token()
             except ValueError as e:
                 common.popup(e)  # warn user
                 return False  # TOFIX how to cancel media play ?
-
             #get base64 licence
             auth = api.get_drm_media_auth(user_token, mid, is_live)
             common.plugin.log("media #{0} auth: {1}".format(mid,auth))
@@ -439,8 +442,8 @@ def download_media(params):
         media_url = stream_node.get('url','').encode('utf-8').strip()
         
     if not media_url:
-        common.plugin.log_error("unable to get stream URL.")
-        common.popup("Impossible de trouver le flux media")
+        common.plugin.log_error("unable to get a downloadable stream URL.")
+        common.popup("Impossible de trouver un flux media téléchargeable")
         return False
 
     #filename
@@ -642,7 +645,7 @@ def media_to_kodi_item(media):
     #MEDIA
     mid = media.get('id')
     media_type = media.get('type')
-    is_livemedia = (media_type == 'livevideo')
+    is_livevideo = (media_type == 'livevideo')
     kodi_type = utils.get_kodi_media_type(media)
     has_drm = media.get('drm')
 
@@ -663,7 +666,7 @@ def media_to_kodi_item(media):
         title = "[COLOR red]DRM[/COLOR] " + title
 
     #live video
-    if is_livemedia:
+    if is_livevideo:
         if utils.media_is_streaming(media):
             title += ' [COLOR yellow]direct[/COLOR]'
         else:
@@ -712,7 +715,7 @@ def media_to_kodi_item(media):
         }
  
     #download context menu
-    if not is_livemedia and not has_drm:
+    if not is_livevideo and not has_drm:
         download_action = (
             'Télécharger', 
             'XBMC.RunPlugin(%s)' % common.plugin.get_url(action='download_media',media_id=mid)
@@ -724,7 +727,7 @@ def media_to_kodi_item(media):
         'label2':   subtitle,
         'thumb':    media.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370','').encode('utf-8').strip(),
         'fanart':   media.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip(),
-        'url':      common.plugin.get_url(action='play_media',media_id=mid,livemedia=is_livemedia,drm=has_drm),
+        'url':      common.plugin.get_url(action='play_media',media_id=mid,livevideo=is_livevideo),
         'info':     infos,
         'is_playable':  True,
         'context_menu': context_actions
