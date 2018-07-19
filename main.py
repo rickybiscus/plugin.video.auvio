@@ -394,17 +394,16 @@ def play_media(params):
 
                 (DRM code for further use:)
 
-                if has_drm:
-                    #get user token
-                    try:
-                        user_token = get_user_jwt_token()
-                    except ValueError as e:
-                        common.popup(e)  # warn user
-                        return False  # TOFIX how to cancel media play ?
+                #get user token
+                try:
+                    user_token = get_user_jwt_token()
+                except ValueError as e:
+                    common.popup(e)  # warn user
+                    return False  # TOFIX how to cancel media play ?
 
-                    #get base64 licence
-                    auth = api.get_drm_media_auth(user_token, mid, is_livevideo)
-                    common.plugin.log("media #{0} auth: {1}".format(mid,auth))
+                #get base64 licence
+                auth = api.get_drm_media_auth(user_token, mid, is_livevideo)
+                common.plugin.log("media #{0} auth: {1}".format(mid,auth))
                 """
 
                 # live
