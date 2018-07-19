@@ -373,35 +373,46 @@ def play_media(params):
     stream_node = media.get('url_streaming')
     
     if stream_node:
-        media_url = stream_node.get('url_hls','').encode('utf-8').strip()
+
+        if media_type == 'audio':
+            media_url = stream_node.get('url','').encode('utf-8').strip()
         
-        #DRM-bypass
-        """
-        We are not able yet to play the DRM protected streams through KODI (should be okay in Kodi Leia).
-        Meanwhile, hack the url_hls property to get a DRM-free stream
-        (Like the 'urlHlsAes128' property returned by http://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE)
-        See also https://github.com/rickybiscus/plugin.video.auvio/pull/16/commits/d20e370650abbd5f63e333646bea70b1be05298d
-        
-        (DRM code for further use:)
-        
-        if has_drm:
-            #get user token
-            try:
-                user_token = get_user_jwt_token()
-            except ValueError as e:
-                common.popup(e)  # warn user
-                return False  # TOFIX how to cancel media play ?
-            #get base64 licence
-            auth = api.get_drm_media_auth(user_token, mid, is_live)
-            common.plugin.log("media #{0} auth: {1}".format(mid,auth))
-        """
-        
-        # live
-        if "_drm.m3u8" in media_url:
-            media_url = media_url.replace('_drm.m3u8','_aes.m3u8')
-        # VOD
-        elif "master.m3u8" in media_url:
-            media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
+        elif is_livevideo and not utils.media_is_streaming(media):
+            #do nothing since stream has not yet began
+            pass
+        else:
+            media_url = stream_node.get('url_hls','').encode('utf-8').strip()
+
+            if has_drm:
+                
+                #DRM-bypass using HLS (HTTP Live Streaming)
+                """
+                We are not able yet to play the DRM protected streams through KODI (should be okay in Kodi Leia).
+                Meanwhile, hack the url_hls property to get a DRM-free stream
+                (Like the 'urlHlsAes128' property returned by http://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE)
+                See also https://github.com/rickybiscus/plugin.video.auvio/pull/16/commits/d20e370650abbd5f63e333646bea70b1be05298d
+
+                (DRM code for further use:)
+
+                if has_drm:
+                    #get user token
+                    try:
+                        user_token = get_user_jwt_token()
+                    except ValueError as e:
+                        common.popup(e)  # warn user
+                        return False  # TOFIX how to cancel media play ?
+
+                    #get base64 licence
+                    auth = api.get_drm_media_auth(user_token, mid, is_livevideo)
+                    common.plugin.log("media #{0} auth: {1}".format(mid,auth))
+                """
+
+                # live
+                if "_drm.m3u8" in media_url:
+                    media_url = media_url.replace('_drm.m3u8','_aes.m3u8')
+                # VOD
+                elif "master.m3u8" in media_url:
+                    media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
 
     if not media_url:
         common.plugin.log_error("unable to get stream URL.")
