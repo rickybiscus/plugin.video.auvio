@@ -17,9 +17,9 @@ gigya_user_key = "APUBPn9ofPkV";
 
 
 def get_user_session(user_login,user_pwd):
-    
+
     # retrieve Gigya user session
-    
+
     url_params = {
         'loginID':  user_login,
         'password': user_pwd,
@@ -34,19 +34,19 @@ def get_user_session(user_login,user_pwd):
     json_data = utils.request_url(url,url_params)
     common.plugin.log('gigya get_user_session:')
     common.plugin.log(json_data)
-    
+
     #no result
     if not json_data:
         common.plugin.log('gigya get_user_session: empty')
         return
-    
+
     data = json.loads(json_data)
-    
+
     #handle errors
-    
+
     if 'errorMessage' in data:
         common.popup( 'gigya get_user_session: %s' % (data['errorMessage']) )
-    
+
     if data['errorCode'] != 0:
         common.plugin.log("gigya get_user_session: error code #%s" % (json['errorCode']))
         return
@@ -54,7 +54,7 @@ def get_user_session(user_login,user_pwd):
     if data['statusCode'] != 200:
         common.plugin.log("gigya get_user_session: status code #%s" % (json['statusCode']))
         return
-    
+
     return data
 
 def get_account_info(uid):
@@ -71,14 +71,14 @@ def get_account_info(uid):
     url = gigya_accounts_base_url + 'getAccountInfo'
 
     json_data = utils.request_url(url,url_params)
-    
+
     #no result
     if not json_data:
         common.plugin.log('gigya get_account_info: empty')
         return
-    
+
     data = json.loads(json_data)
-    
+
     #handle errors
     if 'errorMessage' in data:
         common.popup( 'gigya get_account_info: %s' % (data['errorMessage']) )
@@ -91,13 +91,13 @@ def get_account_info(uid):
     if data['statusCode'] != 200:
         common.plugin.log("gigya get_account_info: status code #%s" % (json['statusCode']))
         return
-    
+
     return data['userInfo']
-  
+
 def get_jwt(uid):
-    
+
     #get the Gigya token based on a user ID
-    
+
     url_params = {
         'targetUID':    uid,
         'apiKey':       gigya_api_key,
@@ -109,14 +109,14 @@ def get_jwt(uid):
     url = gigya_accounts_base_url + 'getJWT'
 
     json_data = utils.request_url(url,url_params)
-    
+
     #no result
     if not json_data:
         common.plugin.log('gigya get_jwt: empty')
         return
-    
+
     data = json.loads(json_data)
-    
+
     #handle errors
     if 'errorMessage' in data:
         common.popup( 'gigya get_jwt: %s' % (data['errorMessage']) )
@@ -129,5 +129,5 @@ def get_jwt(uid):
     if data['statusCode'] != 200:
         common.plugin.log("gigya get_jwt: status code #%s" % (json['statusCode']))
         return
-    
+
     return data['id_token']
