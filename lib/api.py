@@ -21,12 +21,12 @@ import urllib
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
 # SimplePlugin
-from simpleplugin import Plugin
-from simpleplugin import Addon
+from simpleplugin.simpleplugin import Plugin
+from simpleplugin.simpleplugin import Addon
 
 # Plugin modules
-import common
-import utils
+from . import common
+from . import utils
 
 @common.plugin.cached(common.cachetime_app_settings)
 def get_app_settings():

@@ -13,21 +13,21 @@ import xbmcgui
 import json
 import re
 import math
-import urllib2
-import urlparse
+import urllib.request
+import urllib.parse
 import time
 
 # Add the /lib folder to sys
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
 # SimplePlugin
-from simpleplugin import Addon
+from lib.simpleplugin.simpleplugin import Addon
 
 # Plugin modules
-import common
-import api
-import utils
-import gigya
+import lib.common
+import lib.api
+import lib.utils
+import lib.gigya
 
 # initialize_gettext
 #_ = common.plugin.initialize_gettext()
@@ -457,7 +457,7 @@ def download_media(params):
         return False
 
     #filename
-    remote_path = urlparse.urlparse(media_url).path #full path
+    remote_path = urllib.parse.urlparse(media_url).path #full path
     remote_file = media_url.rsplit('/', 1)[-1] #only what's after the last '/'
     remote_filename = os.path.splitext(remote_file)[0]
     remote_ext = os.path.splitext(remote_file)[1]
@@ -471,7 +471,7 @@ def download_media(params):
 
     file_name = file_title + remote_ext
     file_path = xbmc.makeLegalFilename(os.path.join(download_folder, file_name))
-    file_path = urllib2.unquote(file_path)
+    file_path = urllib.parse.unquote(file_path)
 
     common.plugin.log("download_media #{0} - filename:{1} - from:{2}".format(mid,file_name,media_url))
 
@@ -487,13 +487,14 @@ def download_media(params):
     size = 1024 * 1024
     start = time.clock()
     f = open(file_path, 'wb')
-    u = urllib2.urlopen(media_url)
+    request = urllib.request.Request(media_url)
+    response = urllib.request.urlopen(request)
     bytes_so_far = 0
     error = False
 
     # Get file size
     try:
-        total_size = u.info().getheader('Content-Length').strip()
+        total_size = response.info().getheader('Content-Length').strip()
         total_size = int(total_size)
     except AttributeError:
         total_size = 0 # a response doesn't always include the "Content-Length" header
@@ -515,7 +516,7 @@ def download_media(params):
 
         try:
 
-            buff = u.read(size)
+            buff = response.read(size)
             if not buff:
                 break
             else:

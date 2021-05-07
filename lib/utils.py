@@ -10,17 +10,18 @@ import datetime
 import time
 import dateutil.parser
 import dateutil.tz
-import urllib
-import urllib2
-import urlparse
+import urllib.request
 import socket
+
+from urllib.error import URLError, HTTPError
+
 
 # Add the /lib folder to sys
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
 # Plugin modules
-import common
-import api
+from . import common
+from . import api
 
 def parse_dict_args(x, y):
     # https://stackoverflow.com/a/26853961/782013
@@ -49,25 +50,25 @@ def request_url(url, params={}, headers={}):
     common.plugin.log('request_url : %s' % url)
     common.plugin.log(headers)
 
-    req = urllib2.Request(url, headers=headers)
+    request = urllib.request.Request(url, headers=headers)
 
     try:
-        response = urllib2.urlopen(req)
+        response = urllib.request.urlopen(request)
         data = response.read()
         response.close()
         return data
 
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         common.plugin.log('request_url : unable to get %s' % url)
         common.plugin.log('HTTPError = ' + str(e.code))
         raise
 
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         common.plugin.log('request_url : unable to get %s' % url)
         common.plugin.log('URLError = ' + str(e.reason))
         raise
 
-    except httplib.HTTPException, e:
+    except httplib.HTTPException as e:
         common.plugin.log('request_url : unable to get %s' % url)
         common.plugin.log('HTTPException')
         raise

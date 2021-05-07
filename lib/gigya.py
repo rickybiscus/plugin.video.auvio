@@ -2,8 +2,8 @@ import json
 import urllib
 
 # Plugin modules
-import common
-import utils
+from . import common
+from . import utils
 
 # Gigya.com
 gigya_api_key = '3_h1fE5zi6-OZoaLWFHHWQ2Qqs1vZrPW9dxqVAqvRwllmrOJn3Pmyt4w8Fa1KL-wEj'
