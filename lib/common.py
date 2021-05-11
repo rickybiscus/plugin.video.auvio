@@ -16,8 +16,8 @@ import xbmcgui
 sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
 # SimplePlugin
-from simpleplugin.simpleplugin import Plugin
-from simpleplugin.simpleplugin import Addon
+from simpleplugin import Plugin
+from simpleplugin import Addon
 plugin = Plugin() # Create plugin instance
 
 rtbf_url = 'http://www.rtbf.be/'
