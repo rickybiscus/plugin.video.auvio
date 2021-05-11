@@ -74,43 +74,38 @@ def get_user_jwt_token():
 @common.plugin.action()
 def root(params):
 
-    listing = []
+    #direct
+    url = common.plugin.get_url(action='menu_live')
+    li = xbmcgui.ListItem('En direct')
+    li.setArt({'thumb': 'DefaultFolder.png'})
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
 
-    listing.append({
-        'label':    'En direct',
-        'url':     common.plugin.get_url(action='menu_live'),
-    })
+    #accueil
+    url = common.plugin.get_url(action='menu_homepage')
+    li = xbmcgui.ListItem('Accueil')
+    li.setArt({'thumb': 'DefaultFolder.png'})
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
 
-    listing.append({
-        'label':    'Accueil',
-        'url':     common.plugin.get_url(action='menu_homepage'),
-    })
+    #chaines
+    url = common.plugin.get_url(action='menu_channels')
+    li = xbmcgui.ListItem('Chaînes')
+    li.setArt({'thumb': 'DefaultFolder.png'})
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
 
-    listing.append({
-        'label':    'Chaînes',
-        'url':      common.plugin.get_url(action='menu_channels')
-    })
+    #categories
+    url = common.plugin.get_url(action='menu_categories')
+    li = xbmcgui.ListItem('Catégories')
+    li.setArt({'thumb': 'DefaultFolder.png'})
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
 
-    listing.append({
-        'label':    'Catégories',
-        'url':      common.plugin.get_url(action='menu_categories')
-    })
+    #account
+    url = common.plugin.get_url(action='menu_favorites')
+    li = xbmcgui.ListItem('Mon Auvio')
+    li.setArt({'thumb': 'DefaultFolder.png'})
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
 
-    listing.append({
-        'label':    'Mon Auvio',
-        'url':      common.plugin.get_url(action='menu_favorites')
-    })
-
-
-    return common.plugin.create_listing(
-        listing,
-        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = None, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
+    # xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
+    xbmcplugin.endOfDirectory(common.plugin.handle)
 
 @common.plugin.action()
 def menu_single_channel(params):
