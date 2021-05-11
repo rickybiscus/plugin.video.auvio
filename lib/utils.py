@@ -36,7 +36,7 @@ def request_url(url, params={}, headers={}):
 
     #URL parameters
     if params:
-        params_str = urllib.urlencode(params)
+        params_str = urllib.parse.urlencode(params)
         url = url + '?' + params_str
 
     #request headers
