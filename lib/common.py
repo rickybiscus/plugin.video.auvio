@@ -8,12 +8,13 @@ Stuff shared between the python files
 import os
 import sys
 import xbmc
+import xbmcvfs
 import xbmcaddon
 import xbmcplugin
 import xbmcgui
 
 # Add the /lib folder to sys
-sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
+sys.path.append(xbmcvfs.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
 # SimplePlugin
 from simpleplugin import Plugin

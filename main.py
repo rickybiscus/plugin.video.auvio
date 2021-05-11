@@ -10,6 +10,7 @@ import os
 import xbmcaddon
 import xbmcplugin
 import xbmcgui
+import xbmcvfs
 import json
 import re
 import math
@@ -18,8 +19,7 @@ import urllib.parse
 import time
 
 # Add the /lib folder to sys
-sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
-
+sys.path.append(xbmcvfs.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 # SimplePlugin
 from lib.simpleplugin import Addon
 
