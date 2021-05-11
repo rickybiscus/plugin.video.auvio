@@ -24,10 +24,10 @@ sys.path.append(xbmc.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.au
 from lib.simpleplugin import Addon
 
 # Plugin modules
-import lib.common
-import lib.api
-import lib.utils
-import lib.gigya
+from lib import common
+from lib import api
+from lib import utils
+from lib import gigya
 
 # initialize_gettext
 #_ = common.plugin.initialize_gettext()
