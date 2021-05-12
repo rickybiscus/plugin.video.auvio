@@ -7,10 +7,10 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
 import os
+import xbmcvfs
 import xbmcaddon
 import xbmcplugin
 import xbmcgui
-import xbmcvfs
 import json
 import re
 import math
@@ -18,8 +18,9 @@ import urllib.request
 import urllib.parse
 import time
 
-# Add the /lib folder to sys
+# Add the /lib folder to sys TOUFIX TOUCHECK needed ?
 sys.path.append(xbmcvfs.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
+
 # SimplePlugin
 from lib.simpleplugin import Addon
 
@@ -71,44 +72,44 @@ def get_user_jwt_token():
 
             return user_token
 
-@common.plugin.action()
-def root(params):
+@common.plugin.route('/')
+def root():
 
     #direct
-    url = common.plugin.get_url(action='menu_live')
+    url = common.plugin.url_for('menu_live')
     li = xbmcgui.ListItem('En direct')
     li.setArt({'thumb': 'DefaultFolder.png'})
-    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li, isFolder=True)
 
     #accueil
-    url = common.plugin.get_url(action='menu_homepage')
+    url = common.plugin.url_for('menu_homepage')
     li = xbmcgui.ListItem('Accueil')
     li.setArt({'thumb': 'DefaultFolder.png'})
-    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li, isFolder=True)
 
     #chaines
-    url = common.plugin.get_url(action='menu_channels')
+    url = common.plugin.url_for('menu_channels')
     li = xbmcgui.ListItem('Chaînes')
     li.setArt({'thumb': 'DefaultFolder.png'})
-    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li, isFolder=True)
 
     #categories
-    url = common.plugin.get_url(action='menu_categories')
+    url = common.plugin.url_for('menu_categories')
     li = xbmcgui.ListItem('Catégories')
     li.setArt({'thumb': 'DefaultFolder.png'})
-    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li, isFolder=True)
 
     #account
-    url = common.plugin.get_url(action='menu_favorites')
+    url = common.plugin.url_for('menu_favorites')
     li = xbmcgui.ListItem('Mon Auvio')
     li.setArt({'thumb': 'DefaultFolder.png'})
-    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li)
+    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li, isFolder=True)
 
     # xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     xbmcplugin.endOfDirectory(common.plugin.handle)
 
-@common.plugin.action()
-def menu_single_channel(params):
+@common.plugin.route('/menu_single_channel/<channel_id>/<channel_type>/<sidebar_id>')
+def menu_single_channel(**params):
 
     listing = []
     sid = int(params.get('sidebar_id',0)) #to get the channel 'sections' (called widgets in Auvio)
@@ -123,65 +124,38 @@ def menu_single_channel(params):
         radio_listing = get_subradio_listing(cid)
         listing += radio_listing
 
-    return common.plugin.create_listing(
-        listing,
-        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = None, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
+    xbmcplugin.addDirectoryItems(common.plugin.handle, listing, len(listing))
+    xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(common.plugin.handle)
 
-@common.plugin.action()
-def menu_single_category(params):
+
+@common.plugin.route('/menu_single_category/<category_id>/<sidebar_id>')
+def menu_single_category(**params):
 
     listing = []
-    sid = int(params.get('sidebar_id',0)) #to get the channel 'sections' (called widgets in Auvio)
     cid = int(params.get('category_id',0))
+    sid = int(params.get('sidebar_id',0)) #to get the channel 'sections' (called widgets in Auvio)
 
     if sid:
         sidebar_listing = get_sidebar_listing(sid)
         listing += sidebar_listing
 
-    return common.plugin.create_listing(
-        listing,
-        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = None, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
+    xbmcplugin.addDirectoryItems(common.plugin.handle, listing, len(listing))
+    xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(common.plugin.handle)
 
-@common.plugin.action()
-def menu_categories(params):
+@common.plugin.route('/menu_categories')
+def menu_categories():
 
-    listing = []
+    datas = api.get_menu_categories()
+    listing = categories_to_items(datas)
+    xbmcplugin.addDirectoryItems(common.plugin.handle, listing, len(listing))
+    xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(common.plugin.handle)
 
-    categories = api.get_menu_categories()
 
-    if categories:
-        for item in categories:
-            li = category_to_kodi_item(item)
-            listing.append(li)  # Item label
-
-    sortable_by = (
-        xbmcplugin.SORT_METHOD_LABEL
-    )
-
-    return common.plugin.create_listing(
-        listing,
-        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
-
-@common.plugin.action()
-def menu_favorites(params):
+@common.plugin.route('/menu_favorites')
+def menu_favorites():
 
     if not user_has_account():
 
@@ -204,25 +178,16 @@ def menu_favorites(params):
             for favorite in favorites:
                 media_id = favorite.get('data',{}).get('id',0)
                 media_node = api.get_media_details(media_id) #so we match the other API medias; because media_to_kodi_item can handle it - which is not the case of the current 'data' attribute. TOFIX TOCHECK.
-                li = media_to_kodi_item(media_node)
-                listing.append(li)  # Item label
+                list_item = media_to_kodi_item(media_node)
+                url = list_item.getPath()
+                listing.append((url, list_item))
 
-        sortable_by = (
-            xbmcplugin.SORT_METHOD_LABEL
-        )
+        xbmcplugin.addDirectoryItems(common.plugin.handle, listing, len(listing))
+        xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+        xbmcplugin.endOfDirectory(common.plugin.handle)
 
-        return common.plugin.create_listing(
-            listing,
-            #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-            #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-            #cache_to_disk = True, #cache this view to disk.
-            #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
-            #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-            #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-        )
-
-@common.plugin.action()
-def list_widget_section_items(params):
+@common.plugin.route('/list_widget_section_items/<widget_id>/<section_id>')
+def list_widget_section_items(**params):
 
     wid = int(params.get('widget_id',0))
     sid = int(params.get('section_id',0))
@@ -241,89 +206,52 @@ def list_widget_section_items(params):
 
     #BLOCK ITEMS
     for item in blocks_content:
-        li = media_to_kodi_item(item)
-        listing.append(li)  # Item label
+        list_item = media_to_kodi_item(item)
+        url = list_item.getPath()
+        listing.append((url, list_item))
 
-    return common.plugin.create_listing(
-        listing,
-        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = None, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
+    xbmcplugin.addDirectoryItems(common.plugin.handle, listing, len(listing))
+    xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(common.plugin.handle)
 
 
-@common.plugin.action()
-def menu_channels(params):
+@common.plugin.route('/menu_channels')
+def menu_channels():
 
-    listing = []
+    datas = api.get_menu_channels()
+    listing = channels_to_items(datas)
+    xbmcplugin.addDirectoryItems(common.plugin.handle, listing, len(listing))
+    xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(common.plugin.handle)
 
-    channels = api.get_menu_channels()
+@common.plugin.route('/menu_live')
+def menu_live():
 
-    if channels:
-        for channel in channels:
-            li = channel_to_kodi_item(channel)
-            listing.append(li)  # Item label
-
-    return common.plugin.create_listing(
-        listing,
-        #succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = None, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
-
-@common.plugin.action()
-def menu_live(params):
-
-    listing = []
-    live_medias = api.get_live_videos()
-
-    if live_medias and len(live_medias):
-        for live_media in live_medias:
-            li = media_to_kodi_item(live_media)
-            listing.append(li)  # Item label
+    datas = api.get_live_videos()
+    listing = live_videos_to_items(datas)
 
     sortable_by = (xbmcplugin.SORT_METHOD_DATE,
                    xbmcplugin.SORT_METHOD_DURATION)
 
-    return common.plugin.create_listing(
-        listing,
-        succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
+    xbmcplugin.addDirectoryItems(common.plugin.handle, listing, len(listing))
+    xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
+    xbmcplugin.endOfDirectory(common.plugin.handle)
 
-@common.plugin.action()
-def menu_homepage(params):
+@common.plugin.route('/menu_homepage')
+def menu_homepage():
     listing = []
     sid = '3669' #home sidebar
 
     sidebar_listing = get_sidebar_listing(sid)
     listing += sidebar_listing
 
-    sortable_by = (xbmcplugin.SORT_METHOD_DATE,
-                   xbmcplugin.SORT_METHOD_DURATION)
+    xbmcplugin.addDirectoryItems(common.plugin.handle, listing, len(listing))
+    xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_DATE)
+    xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_DURATION)
+    xbmcplugin.endOfDirectory(common.plugin.handle)
 
-    return common.plugin.create_listing(
-        listing,
-        succeeded = True, #if False Kodi won’t open a new listing and stays on the current level.
-        #update_listing = False, #if True, Kodi won’t open a sub-listing but refresh the current one.
-        #cache_to_disk = True, #cache this view to disk.
-        #sort_methods = sortable_by, #he list of integer constants representing virtual folder sort methods.
-        #view_mode = None, #a numeric code for a skin view mode. View mode codes are different in different skins except for 50 (basic listing).
-        #content = None #string - current plugin content, e.g. ‘movies’ or ‘episodes’.
-    )
-
-@common.plugin.action()
-def play_radio(params):
+@common.plugin.route('/play_radio/<channel_id>')
+def play_radio(**params):
 
     cid = int(params.get('channel_id',None))
     media_url = None
@@ -347,8 +275,8 @@ def play_radio(params):
     liz = xbmcgui.ListItem(path=media_url)
     return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
 
-@common.plugin.action()
-def play_media(params):
+@common.plugin.route('/play_media/<media_id>/<livevideo>')
+def play_media(**params):
 
     mid = int(params.get('media_id',None))
     is_livevideo = ( params.get('livevideo','') == 'True' )
@@ -362,7 +290,6 @@ def play_media(params):
 
     common.plugin.log("media #{0} datas: {1}".format(mid,json.dumps(media)))
 
-
     #get media stream URL
     media_url = None
     stream_node = media.get('url_streaming')
@@ -370,13 +297,13 @@ def play_media(params):
     if stream_node:
 
         if media_type == 'audio':
-            media_url = stream_node.get('url','').encode('utf-8').strip()
+            media_url = stream_node.get('url','').strip()
 
         elif is_livevideo and not utils.media_is_streaming(media):
             #do nothing since stream has not yet began
             pass
         else:
-            media_url = stream_node.get('url_hls','').encode('utf-8').strip()
+            media_url = stream_node.get('url_hls','').strip()
 
             if has_drm:
 
@@ -421,7 +348,7 @@ def play_media(params):
     #return playable item
     return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
 
-@common.plugin.action()
+@common.plugin.route('/download_media')
 def download_media(params):
 
     from slugify import slugify
@@ -541,7 +468,7 @@ def get_sidebar_listing(sid):
 
     # Get the KODI menu items for a sidebar.
 
-    listing = []
+    list_items = []
 
     #get sidebar widgets
     widgets = api.get_sidebar_widget_list(sid)
@@ -572,23 +499,23 @@ def get_sidebar_listing(sid):
                     blocks_metas = blocks.get('meta',[])
                     blocks_content = blocks.get('content',[])
 
-                    section_li = {
-                        'label':        blocks_metas.get('title','').encode('utf-8'),
-                        'label2':       blocks_metas.get('subtitle','').encode('utf-8'),
-                        'url':          common.plugin.get_url(action='list_widget_section_items',widget_id=wid,section_id=current_section),
-                        'is_folder':    True,
-                    }
+                    label = blocks_metas.get('title','').encode('utf-8')
+                    label2 = blocks_metas.get('subtitle','').encode('utf-8')
+                    url = common.plugin.url_for('list_widget_section_items',widget_id=wid,section_id=current_section)
 
-                    listing.append(section_li)
+                    list_item = xbmcgui.ListItem(label)
+                    list_item.setLabel2(label2)
+                    list_items.append((url, list_item, True))  #True = is virtual folder
+
                     current_section += 1
 
-    return listing
+    return list_items
 
 def get_subradio_listing(cid):
 
     # Get the KODI audio streams for a radio channel.
 
-    listing = []
+    list_items = []
 
     url_params = {
         'id':   cid
@@ -600,53 +527,68 @@ def get_subradio_listing(cid):
 
             cid = channel.get('id',None)
 
-            li = {
-                'label':    channel.get('name').encode('utf-8').strip(),
-                'url':      common.plugin.get_url(action='play_radio',channel_id=cid),
-                'thumb':    channel.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370',None).encode('utf-8').strip(),
-                'fanart':   channel.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080',None).encode('utf-8').strip(),
-                'is_playable':  True
-            }
+            label = channel.get('name').encode('utf-8').strip()
+            url = common.plugin.url_for('play_radio',channel_id=cid)
+            thumb = channel.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370',None).encode('utf-8').strip()
+            fanart = channel.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080',None).encode('utf-8').strip()
 
-            listing.append(li)
+            list_item = xbmcgui.ListItem(label)
+            list_item.setPath(url)
+            list_item.setProperty('isPlayable', 'true')
+            list_item.setArt({ 'thumb': thumb, 'fanart' : fanart })
+            list_items.append((url, list_item, False))  #True = is virtual folder
 
-        return listing
 
+    return list_items
 
-def channel_to_kodi_item(channel):
+def channels_to_items(datas):
+    list_items = []
 
-    # Convert a category API object to a kodi list item
+    if datas:
+        for data in datas:
 
-    cid = int(channel.get('id',0))
-    ctype = channel.get('type')
-    sid = int(channel.get('sidebar_id',0))
-    label = channel.get('label','').encode('utf-8')
+            cid = int(data.get('id',0))
+            ctype = data.get('type')
+            sid = int(data.get('sidebar_id',0))
 
-    li = {
-        'label':    label,
-        'url':      common.plugin.get_url(action='menu_single_channel',channel_id=cid,channel_type=ctype,sidebar_id=sid)
-    }
-    return li
+            label = data.get('label','').encode('utf-8')
+            url = common.plugin.url_for('menu_single_channel',channel_id=cid,channel_type=ctype,sidebar_id=sid)
 
-def category_to_kodi_item(category):
+            list_item = xbmcgui.ListItem(label)
+            list_items.append((url, list_item, True))  #True = is virtual folder
 
-    # Convert a category API object to a kodi list item
+    return list_items
 
-    cid = int(category.get('id',0))
-    sid = int(category.get('sidebar_id',0))
-    label = category.get('label','')
+def categories_to_items(datas):
+    list_items = []
 
-    li = {
-        'label':    label,
-        'url':      common.plugin.get_url(action='menu_single_category',category_id=cid,sidebar_id=sid)
-    }
-    return li
+    if datas:
+        for data in datas:
+            cid = int(data.get('id',0))
+            sid = int(data.get('sidebar_id',0))
+            label = data.get('label','')
+            url = common.plugin.url_for('menu_single_category',category_id=cid,sidebar_id=sid)
+
+            list_item = xbmcgui.ListItem(label)
+            list_items.append((url, list_item, True))  #True = is virtual folder
+
+    return list_items
+
+def live_videos_to_items(datas):
+    list_items = []
+
+    if datas and len(datas):
+        for data in datas:
+            li = media_to_kodi_item(data)
+            url = li.getPath()
+            list_items.append((url, li, False))
+
+    return list_items
+
 
 def media_to_kodi_item(media):
 
     #common.plugin.log(json.dumps(media))
-
-    context_actions = [] #context menu actions
 
     #MEDIA
     mid = media.get('id')
@@ -654,37 +596,37 @@ def media_to_kodi_item(media):
     is_livevideo = (media_type == 'livevideo')
     kodi_type = utils.get_kodi_media_type(media)
     has_drm = media.get('drm')
-
-    #build label
-    title = media.get('title','').encode('utf-8').strip()
-    subtitle = media.get('subtitle','').encode('utf-8').strip()
     channel_node = media.get('channel')
 
-    if channel_node:
-        channel = channel_node.get('label','').encode('utf-8').strip()
-        title = "[B]{0}[/B] - {1}".format(channel,title)
+    #props
+    label = media.get('title','').strip()
+    label2 = media.get('subtitle','').strip()
+    context_actions = [] #context menu actions
 
-    if subtitle:
-        title = "{0} - [I]{1}[/I]".format(title,subtitle)
+    if channel_node:
+        channel = channel_node.get('label','').strip()
+        label = "[B]{0}[/B] - {1}".format(channel,label)
+
+    if label2:
+        label = "{0} - [I]{1}[/I]".format(label,label2)
 
     #Add 'DRM' prefix
     if has_drm and Addon().get_setting('drm_title_prefix'):
-        title = "[COLOR red]DRM[/COLOR] " + title
+        label = "[COLOR red]DRM[/COLOR] " + label
 
     #live video
     if is_livevideo:
         if utils.media_is_streaming(media):
-            title += ' [COLOR yellow]direct[/COLOR]'
+            label += ' [COLOR yellow]direct[/COLOR]'
         else:
             stream_start = utils.get_stream_start_date_formatted(media.get('start_date',None))
-            title += ' [COLOR red]' + stream_start + '[/COLOR]'
+            label += ' [COLOR red]' + stream_start + '[/COLOR]'
 
 
     #MEDIA INFOS
     #http://romanvm.github.io/script.module.simpleplugin/_actions/vf.html
     #http://kodi.wiki/view/InfoLabels#ListItem
 
-    infos = {}
     info_details = {
         #'date':         utils.datetime_W3C_to_kodi(media.get('date_publish_from')), #file date
         'count':        media.get('id'), #can be used to store an id for later, or for sorting purposes
@@ -703,11 +645,6 @@ def media_to_kodi_item(media):
         #parse args
         info_details = utils.parse_dict_args(info_details,video_infos)
 
-        infos = {
-            'video': info_details
-        }
-
-
     elif kodi_type=='music':
         music_infos = {
             'genre':        media.get('category',{}).get('label').encode('utf-8'),
@@ -716,30 +653,30 @@ def media_to_kodi_item(media):
         #parse args
         info_details = utils.parse_dict_args(info_details,music_infos)
 
-        infos = {
-            'music': info_details
-        }
-
     #download context menu
     if not is_livevideo and not has_drm:
         download_action = (
             'Télécharger',
-            'XBMC.RunPlugin(%s)' % common.plugin.get_url(action='download_media',media_id=mid)
+            'XBMC.RunPlugin(%s)' % common.plugin.url_for('download_media',media_id=mid)
         )
         context_actions.append(download_action)
 
-    li = {
-        'label':    title,
-        'label2':   subtitle,
-        'thumb':    media.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370','').encode('utf-8').strip(),
-        'fanart':   media.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip(),
-        'url':      common.plugin.get_url(action='play_media',media_id=mid,livevideo=is_livevideo),
-        'info':     infos,
-        'is_playable':  True,
-        'context_menu': context_actions
-    }
+    thumb = media.get('images',{}).get('cover',{}).get('1x1',{}).get('370x370','').encode('utf-8').strip()
+    fanart = media.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip()
+    url = common.plugin.url_for('play_media',media_id=mid,livevideo=is_livevideo)
 
-    return li
+    ####URGENT
+    #handle URL & is_playable = True
+
+    list_item = xbmcgui.ListItem(label)
+    list_item.setLabel2(label2)
+    list_item.setPath(url)
+    list_item.setProperty('isPlayable', 'true')
+    list_item.setArt({ 'thumb': thumb, 'fanart' : fanart })
+    list_item.setInfo(kodi_type,info_details)
+    list_item.addContextMenuItems(context_actions)
+
+    return list_item
 
 # Start plugin from within Kodi.
 if __name__ == "__main__":

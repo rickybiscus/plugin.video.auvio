@@ -18,7 +18,7 @@ import xbmcgui
 import json
 import urllib
 
-# Add the /lib folder to sys
+# Add the /lib folder to sys TOUFIX TOUCHECK needed ?
 sys.path.append(xbmcvfs.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
 # SimplePlugin

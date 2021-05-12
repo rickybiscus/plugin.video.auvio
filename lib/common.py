@@ -13,13 +13,13 @@ import xbmcaddon
 import xbmcplugin
 import xbmcgui
 
-# Add the /lib folder to sys
+# Add the /lib folder to sys TOUFIX TOUCHECK needed ?
 sys.path.append(xbmcvfs.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
 # SimplePlugin
-from simpleplugin import Plugin
+from simpleplugin import RoutedPlugin
 from simpleplugin import Addon
-plugin = Plugin() # Create plugin instance
+plugin = RoutedPlugin() # Create plugin instance
 
 rtbf_url = 'http://www.rtbf.be/'
 cryo_base_url = rtbf_url + "api/partner/generic/"

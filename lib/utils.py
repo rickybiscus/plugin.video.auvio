@@ -17,7 +17,7 @@ import socket
 from urllib.error import URLError, HTTPError
 
 
-# Add the /lib folder to sys
+# Add the /lib folder to sys TOUFIX TOUCHECK needed ?
 sys.path.append(xbmcvfs.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
 
 # Plugin modules
@@ -55,16 +55,16 @@ def request_url(url, params={}, headers={}):
 
     try:
         response = urllib.request.urlopen(request)
-        data = response.read()
+        data = response.read().decode("utf-8")
         response.close()
         return data
 
-    except urllib2.HTTPError as e:
+    except HTTPError as e:
         common.plugin.log('request_url : unable to get %s' % url)
         common.plugin.log('HTTPError = ' + str(e.code))
         raise
 
-    except urllib2.URLError as e:
+    except URLError as e:
         common.plugin.log('request_url : unable to get %s' % url)
         common.plugin.log('URLError = ' + str(e.reason))
         raise
