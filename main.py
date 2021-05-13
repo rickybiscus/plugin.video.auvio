@@ -263,20 +263,22 @@ def play_radio(**params):
     channel = api.get_single_channel(cid)
 
     if channel:
-        common.plugin.log("channel data:",xbmc.LOGINFO)
-        common.plugin.log(json.dumps(channel),xbmc.LOGINFO)
         stream_node = channel.get('streamurl',None)
 
         if stream_node:
             media_url = stream_node.get('mp3','').encode('utf-8').strip()
 
-    if not media_url:
+    if media_url:
+        #play
+
+        liz = xbmcgui.ListItem(path=media_url)
+        xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
+
+    else:
+
         common.plugin.log("unable to get the radio stream URL.",xbmc.LOGERROR)
         common.popup("Impossible de trouver le flux radio")
 
-    #play
-    liz = xbmcgui.ListItem(path=media_url)
-    return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
 
 @common.plugin.route('/play_media/<media_id>/<livevideo>')
 def play_media(**params):
@@ -338,18 +340,21 @@ def play_media(**params):
                 elif "master.m3u8" in media_url:
                     media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
 
-    if not media_url:
+    if media_url:
+
+        common.plugin.log("media #{0} stream url: {1}".format(mid,media_url),xbmc.LOGINFO)
+
+        #build playable item
+        liz = xbmcgui.ListItem(path=media_url)
+
+        #return playable item
+        xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
+
+    else:
         common.plugin.log("unable to get stream URL.",xbmc.LOGERROR)
         common.popup("Impossible de trouver le flux media")
-        return False #TOFIX how to cancel media play ?
 
-    common.plugin.log("media #{0} stream url: {1}".format(mid,media_url),xbmc.LOGINFO)
 
-    #build playable item
-    liz = xbmcgui.ListItem(path=media_url)
-
-    #return playable item
-    return xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
 
 @common.plugin.route('/download_media')
 def download_media(params):
@@ -538,6 +543,7 @@ def get_subradio_listing(cid):
             list_item = xbmcgui.ListItem(label)
             list_item.setPath(url)
             list_item.setProperty('isPlayable', 'true')
+            list_item.setInfo('music',{})
             list_item.setArt({ 'thumb': thumb, 'fanart' : fanart })
             list_items.append((url, list_item, False))  #True = is virtual folder
 
@@ -666,15 +672,12 @@ def media_to_kodi_item(media):
     fanart = media.get('images',{}).get('illustration',{}).get('16x9',{}).get('1920x1080','').encode('utf-8').strip()
     url = common.plugin.url_for('play_media',media_id=mid,livevideo=is_livevideo)
 
-    ####URGENT
-    #handle URL & is_playable = True
-
     list_item = xbmcgui.ListItem(label)
     list_item.setLabel2(label2)
     list_item.setPath(url)
     list_item.setProperty('isPlayable', 'true')
-    list_item.setArt({ 'thumb': thumb, 'fanart' : fanart })
     list_item.setInfo(kodi_type,info_details)
+    list_item.setArt({ 'thumb': thumb, 'fanart' : fanart })
     list_item.addContextMenuItems(context_actions)
 
     return list_item
