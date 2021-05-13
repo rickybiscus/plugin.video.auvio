@@ -41,8 +41,8 @@ def get_app_settings():
 
     json_data = utils.request_url(url,url_params)
     datas = json.loads(json_data)
-    common.plugin.log("api.get_app_settings")
-    common.plugin.log(json_data)
+    common.plugin.log("api.get_app_settings",xbmc.LOGINFO)
+    common.plugin.log(json_data,xbmc.LOGINFO)
     return datas
 
 def get_menu_categories():
@@ -68,7 +68,7 @@ def get_channel_list(url_params={}):
 
     url_params = utils.parse_dict_args(url_params_default,url_params)
 
-    common.plugin.log("api.get_channel_list")
+    common.plugin.log("api.get_channel_list",xbmc.LOGINFO)
 
     url = common.cryo_base_url + 'epg/channellist'
 
@@ -108,7 +108,7 @@ def get_sidebar_widget_list(sidebar_id):
         'v':            7,
     }
 
-    common.plugin.log("api.get_sidebar_widget_list: #" + str(sidebar_id))
+    common.plugin.log("api.get_sidebar_widget_list: #" + str(sidebar_id),xbmc.LOGINFO)
 
     url = common.cryo_base_url + 'widget/widgetlist'
 
@@ -117,7 +117,7 @@ def get_sidebar_widget_list(sidebar_id):
         return
 
     data = json.loads(json_data)
-    common.plugin.log(json_data)
+    common.plugin.log(json_data,xbmc.LOGINFO)
 
     return data
 
@@ -129,7 +129,7 @@ def get_widget_detail(widget_id):
         'v':            8,
     }
 
-    common.plugin.log("api.get_widget_detail: #" + str(widget_id))
+    common.plugin.log("api.get_widget_detail: #" + str(widget_id),xbmc.LOGINFO)
 
     url = common.cryo_base_url + 'widget/widgetdetail'
 
@@ -138,7 +138,7 @@ def get_widget_detail(widget_id):
         return
 
     data = json.loads(json_data)
-    #common.plugin.log(json_data)
+    common.plugin.log(json_data,xbmc.LOGINFO)
 
     return data
 
@@ -146,7 +146,7 @@ def get_widget_detail(widget_id):
 def get_media_details(mid,live=False):
     # Get the media details by a ID from the API
 
-    common.plugin.log('get_media_details')
+    common.plugin.log('get_media_details',xbmc.LOGINFO)
 
     if live:
         url = common.cryo_base_url + 'live/planningdetail'
@@ -160,7 +160,7 @@ def get_media_details(mid,live=False):
         'id':           mid
     }
 
-    common.plugin.log("api.get_media_details media #{0} - is live:{1}".format(mid,live))
+    common.plugin.log("api.get_media_details media #{0} - is live:{1}".format(mid,live),xbmc.LOGINFO)
 
     try:
         json_data = utils.request_url(url,url_params)
@@ -170,10 +170,9 @@ def get_media_details(mid,live=False):
         data = json.loads(json_data)
 
     except:
-        common.plugin.log_error("api.get_media_details - failed for media #{0}".format(mid))
+        common.plugin.log("api.get_media_details - failed for media #{0}".format(mid),xbmc.LOGERROR)
         return None
 
-    common.plugin.log(json.dumps(data))
     return data
 
 def get_live_videos(page=1):
@@ -201,7 +200,7 @@ def get_live_videos(page=1):
         return
     else:
         nodes = json.loads(json_data)
-        common.plugin.log('api.get_live_videos: found %d nodes' % len(nodes))
+        common.plugin.log('api.get_live_videos: found %d nodes' % len(nodes),xbmc.LOGINFO)
         return nodes
 
 def get_user_favorites(user_token, type='media', offset = None,limit = None):
@@ -232,7 +231,7 @@ def get_user_favorites(user_token, type='media', offset = None,limit = None):
     if json_data:
         nodes = json.loads(json_data)
 
-    common.plugin.log('api.get_user_favorites: found %d nodes' % len(nodes))
+    common.plugin.log('api.get_user_favorites: found %d nodes' % len(nodes),xbmc.LOGINFO)
 
     return nodes
 
@@ -269,7 +268,7 @@ def get_drm_media_auth(user_token,mid,is_live=False):
             data = json.loads(json_data)
             auth = data.get('auth_encoded_xml')
 
-            common.plugin.log("media #{0} auth: {1}".format(mid,auth))
+            common.plugin.log("media #{0} auth: {1}".format(mid,auth),xbmc.LOGINFO)
 
             return auth
 

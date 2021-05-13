@@ -48,8 +48,8 @@ def request_url(url, params={}, headers={}):
 
     headers = parse_dict_args(headers_defaults,headers)
 
-    common.plugin.log('request_url : %s' % url)
-    common.plugin.log(headers)
+    common.plugin.log('request_url : %s' % url,xbmc.LOGINFO)
+    common.plugin.log(headers,xbmc.LOGINFO)
 
     request = urllib.request.Request(url, headers=headers)
 
@@ -60,24 +60,24 @@ def request_url(url, params={}, headers={}):
         return data
 
     except HTTPError as e:
-        common.plugin.log('request_url : unable to get %s' % url)
-        common.plugin.log('HTTPError = ' + str(e.code))
+        common.plugin.log('request_url : unable to get %s' % url,xbmc.LOGERROR)
+        common.plugin.log('HTTPError = ' + str(e.code),xbmc.LOGERROR)
         raise
 
     except URLError as e:
-        common.plugin.log('request_url : unable to get %s' % url)
-        common.plugin.log('URLError = ' + str(e.reason))
+        common.plugin.log('request_url : unable to get %s' % url,xbmc.LOGERROR)
+        common.plugin.log('URLError = ' + str(e.reason),xbmc.LOGERROR)
         raise
 
     except httplib.HTTPException as e:
-        common.plugin.log('request_url : unable to get %s' % url)
-        common.plugin.log('HTTPException')
+        common.plugin.log('request_url : unable to get %s' % url,xbmc.LOGERROR)
+        common.plugin.log('HTTPException',xbmc.LOGERROR)
         raise
 
     except Exception:
         import traceback
-        common.plugin.log('request_url : unable to get %s' % url)
-        common.plugin.log('generic exception: ' + traceback.format_exc())
+        common.plugin.log('request_url : unable to get %s' % url,xbmc.LOGERROR)
+        common.plugin.log('generic exception: ' + traceback.format_exc(),xbmc.LOGERROR)
         raise
 
 def now():
@@ -128,7 +128,7 @@ def media_is_streaming(media):
     end_date = media.get('end_date',None)
 
     if not start_date or not end_date:
-        common.plugin.log_error('utils.media_is_streaming() : missing start_date or end_date')
+        common.plugin.log('utils.media_is_streaming() : missing start_date or end_date',xbmc.LOGERROR)
         return
 
     now_datetime = now()
@@ -140,7 +140,7 @@ def media_is_streaming(media):
 def get_stream_start_date_formatted(start_date):
 
     if start_date is None:
-        common.plugin.log_error('utils.get_stream_start_date_formatted() : missing start_date')
+        common.plugin.log('utils.get_stream_start_date_formatted() : missing start_date',xbmc.LOGERROR)
         return None
 
     now_datetime = now()

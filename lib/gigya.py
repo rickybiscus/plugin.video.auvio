@@ -32,12 +32,12 @@ def get_user_session(user_login,user_pwd):
     url = gigya_accounts_base_url + 'login'
 
     json_data = utils.request_url(url,url_params)
-    common.plugin.log('gigya get_user_session:')
-    common.plugin.log(json_data)
+    common.plugin.log('gigya get_user_session:',xbmc.LOGINFO)
+    common.plugin.log(json_data,xbmc.LOGINFO)
 
     #no result
     if not json_data:
-        common.plugin.log('gigya get_user_session: empty')
+        common.plugin.log('gigya get_user_session: empty',xbmc.LOGINFO)
         return
 
     data = json.loads(json_data)
@@ -48,11 +48,11 @@ def get_user_session(user_login,user_pwd):
         common.popup( 'gigya get_user_session: %s' % (data['errorMessage']) )
 
     if data['errorCode'] != 0:
-        common.plugin.log("gigya get_user_session: error code #%s" % (json['errorCode']))
+        common.plugin.log("gigya get_user_session: error code #%s" % (json['errorCode']),xbmc.LOGERROR)
         return
 
     if data['statusCode'] != 200:
-        common.plugin.log("gigya get_user_session: status code #%s" % (json['statusCode']))
+        common.plugin.log("gigya get_user_session: status code #%s" % (json['statusCode']),xbmc.LOGERROR)
         return
 
     return data
@@ -74,7 +74,7 @@ def get_account_info(uid):
 
     #no result
     if not json_data:
-        common.plugin.log('gigya get_account_info: empty')
+        common.plugin.log('gigya get_account_info: empty',xbmc.LOGERROR)
         return
 
     data = json.loads(json_data)
@@ -82,14 +82,14 @@ def get_account_info(uid):
     #handle errors
     if 'errorMessage' in data:
         common.popup( 'gigya get_account_info: %s' % (data['errorMessage']) )
-        common.plugin.log( 'gigya get_account_info: %s' % (data['errorMessage']) )
+        common.plugin.log( 'gigya get_account_info: %s' % (data['errorMessage']),xbmc.LOGERROR)
 
     if data['errorCode'] != 0:
-        common.plugin.log("gigya get_account_info: error code #%s" % (json['errorCode']))
+        common.plugin.log("gigya get_account_info: error code #%s" % (json['errorCode']),xbmc.LOGERROR)
         return
 
     if data['statusCode'] != 200:
-        common.plugin.log("gigya get_account_info: status code #%s" % (json['statusCode']))
+        common.plugin.log("gigya get_account_info: status code #%s" % (json['statusCode']),xbmc.LOGERROR)
         return
 
     return data['userInfo']
@@ -112,7 +112,7 @@ def get_jwt(uid):
 
     #no result
     if not json_data:
-        common.plugin.log('gigya get_jwt: empty')
+        common.plugin.log('gigya get_jwt: empty',xbmc.LOGERROR)
         return
 
     data = json.loads(json_data)
@@ -120,14 +120,14 @@ def get_jwt(uid):
     #handle errors
     if 'errorMessage' in data:
         common.popup( 'gigya get_jwt: %s' % (data['errorMessage']) )
-        common.plugin.log( 'gigya get_jwt: %s' % (data['errorMessage']) )
+        common.plugin.log( 'gigya get_jwt: %s' % (data['errorMessage']),xbmc.LOGERROR)
 
     if data['errorCode'] != 0:
-        common.plugin.log("gigya get_jwt: error code #%s" % (json['errorCode']))
+        common.plugin.log("gigya get_jwt: error code #%s" % (json['errorCode']),xbmc.LOGERROR)
         return
 
     if data['statusCode'] != 200:
-        common.plugin.log("gigya get_jwt: status code #%s" % (json['statusCode']))
+        common.plugin.log("gigya get_jwt: status code #%s" % (json['statusCode']),xbmc.LOGERROR)
         return
 
     return data['id_token']

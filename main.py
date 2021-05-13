@@ -6,6 +6,8 @@
 # Created on: 04.10.2016
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
+#documentation about log levels : https://alwinesch.github.io/group__python__xbmc.html#ga3cd3eff2195727144ad6fbabd4744961
+
 import os
 import xbmcvfs
 import xbmcaddon
@@ -48,7 +50,7 @@ def get_user_jwt_token():
     #TOFIX should be cached in a way or another so we don't always call a new session ?
 
     if not user_has_account():
-        common.plugin.log("get_user_jwt_token - missing email or password")
+        common.plugin.log("get_user_jwt_token - missing email or password",xbmc.LOGWARNING)
         raise ValueError("Veuillez configurer votre compte dans les options de l'addon.")
 
     else:
@@ -64,7 +66,7 @@ def get_user_jwt_token():
 
         if not user_token:
 
-            common.plugin.log("get_user_jwt_token - unable to get user token")
+            common.plugin.log("get_user_jwt_token - unable to get user token",xbmc.LOGERROR)
             raise ValueError("Impossible de récupérer le token utilisateur.")
             return #TOFIX TOCHECK do we need a to return here ?
 
@@ -256,19 +258,20 @@ def play_radio(**params):
     cid = int(params.get('channel_id',None))
     media_url = None
 
-    common.plugin.log("play_radio #{0}".format(cid))
+    common.plugin.log("play_radio #{0}".format(cid),xbmc.LOGINFO)
 
     channel = api.get_single_channel(cid)
 
     if channel:
-        common.plugin.log(json.dumps(channel))
+        common.plugin.log("channel data:",xbmc.LOGINFO)
+        common.plugin.log(json.dumps(channel),xbmc.LOGINFO)
         stream_node = channel.get('streamurl',None)
 
         if stream_node:
             media_url = stream_node.get('mp3','').encode('utf-8').strip()
 
     if not media_url:
-        common.plugin.log_error("unable to get the radio stream URL.")
+        common.plugin.log("unable to get the radio stream URL.",xbmc.LOGERROR)
         common.popup("Impossible de trouver le flux radio")
 
     #play
@@ -281,14 +284,14 @@ def play_media(**params):
     mid = int(params.get('media_id',None))
     is_livevideo = ( params.get('livevideo','') == 'True' )
 
-    common.plugin.log("play media #{0} - live:{1}".format(mid,is_livevideo))
+    common.plugin.log("play media #{0} - live:{1}".format(mid,is_livevideo),xbmc.LOGINFO)
 
     #get media details
     media = api.get_media_details(mid,is_livevideo)
     media_type = media.get('type')
     has_drm = media.get('drm')
 
-    common.plugin.log("media #{0} datas: {1}".format(mid,json.dumps(media)))
+    common.plugin.log("media #{0} datas: {1}".format(mid,json.dumps(media)),xbmc.LOGINFO)
 
     #get media stream URL
     media_url = None
@@ -325,7 +328,7 @@ def play_media(**params):
 
                 #get base64 licence
                 auth = api.get_drm_media_auth(user_token, mid, is_livevideo)
-                common.plugin.log("media #{0} auth: {1}".format(mid,auth))
+                common.plugin.log("media #{0} auth: {1}".format(mid,auth),xbmc.LOGINFO)
                 """
 
                 # live
@@ -336,11 +339,11 @@ def play_media(**params):
                     media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
 
     if not media_url:
-        common.plugin.log_error("unable to get stream URL.")
+        common.plugin.log("unable to get stream URL.",xbmc.LOGERROR)
         common.popup("Impossible de trouver le flux media")
         return False #TOFIX how to cancel media play ?
 
-    common.plugin.log("media #{0} stream url: {1}".format(mid,media_url))
+    common.plugin.log("media #{0} stream url: {1}".format(mid,media_url),xbmc.LOGINFO)
 
     #build playable item
     liz = xbmcgui.ListItem(path=media_url)
@@ -358,7 +361,7 @@ def download_media(params):
 
     if not download_folder:
         common.popup("Veuillez configurer un répertoire de téléchargement dans les paramètres du plugin")
-        common.plugin.log_error("download_media: No directory set")
+        common.plugin.log("download_media: No directory set",xbmc.LOGERROR)
         return False
 
     #get media details
@@ -374,7 +377,7 @@ def download_media(params):
         media_url = stream_node.get('url','').encode('utf-8').strip()
 
     if not media_url:
-        common.plugin.log_error("unable to get a downloadable stream URL.")
+        common.plugin.log("unable to get a downloadable stream URL.",xbmc.LOGERROR)
         common.popup("Impossible de trouver un flux media téléchargeable")
         return False
 
@@ -395,7 +398,7 @@ def download_media(params):
     file_path = xbmc.makeLegalFilename(os.path.join(download_folder, file_name))
     file_path = urllib.parse.unquote(file_path)
 
-    common.plugin.log("download_media #{0} - filename:{1} - from:{2}".format(mid,file_name,media_url))
+    common.plugin.log("download_media #{0} - filename:{1} - from:{2}".format(mid,file_name,media_url),xbmc.LOGINFO)
 
     # Overwrite existing file?
     if os.path.isfile(file_path):
@@ -587,8 +590,6 @@ def live_videos_to_items(datas):
 
 
 def media_to_kodi_item(media):
-
-    #common.plugin.log(json.dumps(media))
 
     #MEDIA
     mid = media.get('id')
