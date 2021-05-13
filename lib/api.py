@@ -104,6 +104,7 @@ def get_single_channel(cid,url_params={}):
     return channel
 
 
+#each category (called 'sidebar' in the Auvio API) has a list of sections (called 'widgets' in the Auvio API).
 @common.plugin.cached(common.cachetime_medias_recent)
 def get_sidebar_widget_list(sidebar_id):
 
@@ -122,8 +123,6 @@ def get_sidebar_widget_list(sidebar_id):
         return
 
     data = json.loads(json_data)
-    common.plugin.log(json_data,xbmc.LOGINFO)
-
     return data
 
 @common.plugin.cached(common.cachetime_medias_recent)
@@ -143,8 +142,6 @@ def get_widget_detail(widget_id):
         return
 
     data = json.loads(json_data)
-    common.plugin.log(json_data,xbmc.LOGINFO)
-
     return data
 
 @common.plugin.cached(common.cachetime_media_data)
