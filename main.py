@@ -101,11 +101,12 @@ def root():
     li.setArt({'thumb': 'DefaultFolder.png'})
     xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li, isFolder=True)
 
+    #TOUFIX
     #account
-    url = common.plugin.url_for('menu_favorites')
-    li = xbmcgui.ListItem('Mon Auvio')
-    li.setArt({'thumb': 'DefaultFolder.png'})
-    xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li, isFolder=True)
+    # url = common.plugin.url_for('menu_favorites')
+    # li = xbmcgui.ListItem('Mon Auvio')
+    # li.setArt({'thumb': 'DefaultFolder.png'})
+    # xbmcplugin.addDirectoryItem(handle=common.plugin.handle, url=url, listitem=li, isFolder=True)
 
     # xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL_IGNORE_THE)
     xbmcplugin.endOfDirectory(common.plugin.handle)
