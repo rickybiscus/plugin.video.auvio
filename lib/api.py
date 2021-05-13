@@ -87,6 +87,8 @@ def get_single_channel(cid,url_params={}):
     url_params['id'] = cid #set/override channel ID in URL params
     channels = get_channel_list(url_params)
 
+    common.plugin.log("getting datas for channel #%s..." % (cid),xbmc.LOGINFO)
+
     if not channels:
         return
 
@@ -95,8 +97,11 @@ def get_single_channel(cid,url_params={}):
     if not filtered:
         return
 
-    #return first one
-    return filtered[0]
+    #get first one
+    channel = filtered[0]
+
+    common.plugin.log(json.dumps(channel),xbmc.LOGINFO)
+    return channel
 
 
 @common.plugin.cached(common.cachetime_medias_recent)
