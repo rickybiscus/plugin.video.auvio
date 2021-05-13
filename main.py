@@ -188,11 +188,11 @@ def menu_favorites():
         xbmcplugin.addSortMethod(common.plugin.handle, xbmcplugin.SORT_METHOD_LABEL)
         xbmcplugin.endOfDirectory(common.plugin.handle)
 
-@common.plugin.route('/list_widget_section_items/<widget_id>/<section_id>')
-def list_widget_section_items(**params):
+@common.plugin.route('/list_widget_block_items/<widget_id>/<block_id>')
+def list_widget_block_items(**params):
 
     wid = int(params.get('widget_id',0))
-    sid = int(params.get('section_id',0))
+    bid = int(params.get('block_id',0))
 
     listing = []
 
@@ -201,9 +201,8 @@ def list_widget_section_items(**params):
     widget_metas = widget_details.get('widget_meta')
     widget_blocks = widget_details.get('widget_blocks')
 
-    section_metas = widget_metas[sid]
-    blocks = widget_blocks[sid]
-    blocks_metas = blocks.get('meta',[])
+    section_metas = widget_metas[bid]
+    blocks = widget_blocks[bid]
     blocks_content = blocks.get('content',[])
 
     #BLOCK ITEMS
@@ -481,41 +480,42 @@ def get_sidebar_listing(sid):
     #get sidebar widgets
     widgets = api.get_sidebar_widget_list(sid)
 
+    common.plugin.log("getting every widget item for sidebar #%s..." % (sid),xbmc.LOGINFO)
+
     if widgets:
         for widget in widgets:
 
             #widget sections
             wid = int(widget.get('id',0))
             widget_details = api.get_widget_detail(wid)
-            widget_metas = widget_details.get('widget_meta')
             widget_blocks = widget_details.get('widget_blocks')
+            blocks_count = len(widget_blocks)
 
-            if widget_metas:
-                section_count = len(widget_metas);
+            if blocks_count:
 
-            if section_count:
-                current_section = 0;
-                while current_section < section_count:
+                current_block = 0;
+                while current_block < blocks_count:
 
                     try:
-                        blocks = widget_blocks[current_section]
+                        blocks = widget_blocks[current_block]
                     except IndexError:
-                        current_section += 1
+                        current_block += 1
                         break;
 
-                    #section_metas = widget_metas[current_section]
                     blocks_metas = blocks.get('meta',[])
                     blocks_content = blocks.get('content',[])
 
-                    label = blocks_metas.get('title','').encode('utf-8')
-                    label2 = blocks_metas.get('subtitle','').encode('utf-8')
-                    url = common.plugin.url_for('list_widget_section_items',widget_id=wid,section_id=current_section)
+                    label = blocks_metas.get('title','')
+                    label2 = blocks_metas.get('subtitle','')
+                    url = common.plugin.url_for('list_widget_block_items',widget_id=wid,block_id=current_block)
 
                     list_item = xbmcgui.ListItem(label)
                     list_item.setLabel2(label2)
                     list_items.append((url, list_item, True))  #True = is virtual folder
 
-                    current_section += 1
+                    current_block += 1
+
+    common.plugin.log("...finished getting widgets for sidebar #%s" % (sid),xbmc.LOGINFO)
 
     return list_items
 
