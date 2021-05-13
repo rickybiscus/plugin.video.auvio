@@ -1,5 +1,6 @@
 import json
 import urllib
+import xbmc
 
 # Plugin modules
 from . import common
