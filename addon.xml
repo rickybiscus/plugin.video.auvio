@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.auvio" name="RTBF Auvio" version="3.2.2" provider-name="rickybiscus">
+<addon id="plugin.video.auvio" name="RTBF Auvio" version="3.2.3" provider-name="rickybiscus">
 <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.dateutil" version="2.4.2"/>
@@ -23,7 +23,7 @@
         <platform>all</platform>
         <license>MIT</license>
         <forum></forum>
-        <website>http://www.rtbf.be/auvio</website>
+        <website>https://www.rtbf.be/auvio</website>
         <source>https://github.com/rickybiscus/plugin.video.auvio</source>
         <assets>
             <icon>resources/icon.png</icon>
