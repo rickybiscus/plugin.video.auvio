@@ -21,10 +21,10 @@ from simpleplugin import RoutedPlugin
 from simpleplugin import Addon
 plugin = RoutedPlugin() # Create plugin instance
 
-rtbf_url = 'http://www.rtbf.be/'
+rtbf_url = 'https://www.rtbf.be/'
 cryo_base_url = rtbf_url + "api/partner/generic/"
 cryo_partner_key = '97a0ceb4562f285ba770aaba6c81d047' #website: 82ed2c5b7df0a9334dfbda21eccd8427
-auvio_url = 'http://www.rtbf.be/auvio/'
+auvio_url = 'https://www.rtbf.be/auvio/'
 
 #in minutes
 cachetime_app_settings = 60 * 24
