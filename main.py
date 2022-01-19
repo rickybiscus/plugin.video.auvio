@@ -316,7 +316,7 @@ def play_media(**params):
                 """
                 We are not able yet to play the DRM protected streams through KODI (should be okay in Kodi Leia).
                 Meanwhile, hack the url_hls property to get a DRM-free stream
-                (Like the 'urlHlsAes128' property returned by http://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE)
+                (Like the 'urlHlsAes128' property returned by https://www.rtbf.be/api/media/video/?method=getVideoDetail&args[]=MEDIAIDHERE)
                 See also https://github.com/rickybiscus/plugin.video.auvio/pull/16/commits/d20e370650abbd5f63e333646bea70b1be05298d
 
                 (DRM code for further use:)
