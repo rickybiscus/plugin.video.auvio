@@ -75,10 +75,6 @@ def get_user_jwt_token():
 
             return user_token
 
-def get_redbee_token():
-
-    return redbee_token
-
 @common.plugin.route('/')
 def root():
 
