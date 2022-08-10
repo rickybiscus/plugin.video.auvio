@@ -33,7 +33,7 @@ def parse_dict_args(x, y):
     z.update(y)    # modifies z with y's keys and values & returns None
     return z
 
-def request_url(url, params={}, headers={}):
+def request_url(url, params={}, headers={}, data=None):
 
     #URL parameters
     if params:
@@ -51,7 +51,7 @@ def request_url(url, params={}, headers={}):
     common.plugin.log('request_url : %s' % url,xbmc.LOGINFO)
     common.plugin.log(headers,xbmc.LOGINFO)
 
-    request = urllib.request.Request(url, headers=headers)
+    request = urllib.request.Request(url, data=data, headers=headers)
 
     try:
         response = urllib.request.urlopen(request)

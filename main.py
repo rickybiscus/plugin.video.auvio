@@ -31,6 +31,7 @@ from lib import common
 from lib import api
 from lib import utils
 from lib import gigya
+from lib import redbee
 
 # initialize_gettext
 #_ = common.plugin.initialize_gettext()
@@ -73,6 +74,10 @@ def get_user_jwt_token():
         else:
 
             return user_token
+
+def get_redbee_token():
+
+    return redbee_token
 
 @common.plugin.route('/')
 def root():
@@ -297,6 +302,8 @@ def play_media(**params):
 
     #get media stream URL
     media_url = None
+    
+    # for old media using the old API
     stream_node = media.get('url_streaming')
 
     if stream_node:
@@ -339,6 +346,26 @@ def play_media(**params):
                 # VOD
                 elif "master.m3u8" in media_url:
                     media_url = media_url.replace('/master.m3u8','-aes/master.m3u8')
+    
+    else:
+        # Get RTBF JSON Web Token
+        common.plugin.log("Before rtbf_login()",xbmc.LOGINFO)
+
+        if not user_has_account():
+            common.plugin.log("get_user_jwt_token - missing email or password",xbmc.LOGWARNING)
+            raise ValueError("Veuillez configurer votre compte dans les options de l'addon.")
+        else:
+            user_login = Addon().get_setting('email')
+            user_pwd = Addon().get_setting('password')
+        
+        rtbf_login_data = redbee.rtbf_login(user_login, user_pwd)
+        rtbf_jwt = redbee.get_rtbf_jwt(rtbf_login_data['sessionInfo']['cookieValue'])
+        
+        # Get RedBee JSON Web Token
+        redbee_jwt = redbee.get_redbee_jwt(rtbf_jwt['id_token'])
+
+        # Get media URL
+        media_url = redbee.get_redbee_media_url(mid, redbee_jwt['sessionToken'])        
 
     if media_url:
 
