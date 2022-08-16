@@ -1,7 +1,12 @@
 # Changelog
 
-## v3.2.0
+## v3.3.0
+Released 16 August 2022
 * Fix issues with new stream provider "RedBee" (by Qedinux)
+
+## v3.2.3
+Released 19 January 2022
+* HTTPS bugix (by SDaron)
 
 ## v3.1.8
 Released 18 July 2018
