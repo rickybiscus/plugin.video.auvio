@@ -1,5 +1,8 @@
 # Changelog
 
+## v3.3.0
+* Fix issues with new stream provider (RedBee)
+
 ## v3.1.8
 Released 18 July 2018
 * Temporary DRM bypass (by mokhito)
