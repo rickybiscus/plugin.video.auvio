@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.3.0
+## v3.2.0
 * Fix issues with new stream provider "RedBee" (by Qedinux)
 
 ## v3.1.8
