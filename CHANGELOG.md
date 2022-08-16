@@ -1,7 +1,7 @@
 # Changelog
 
 ## v3.3.0
-* Fix issues with new stream provider (RedBee)
+* Fix issues with new stream provider "RedBee" (by Qedinux)
 
 ## v3.1.8
 Released 18 July 2018
