@@ -365,9 +365,10 @@ def play_media(**params):
 
         # Get media URL
         media_data = redbee.get_redbee_media_url(mid, redbee_jwt['sessionToken'])        
-        media_url = media_data['mediaLocator']
-        media_drmlicense = media_data['drm']['com.widevine.alpha']['licenseServerUrl']
-        common.plugin.log("media #{0} drm license: {1}".format(mid,media_drmlicense),xbmc.LOGINFO)
+        if media_data:
+            media_url = media_data['mediaLocator']
+            media_drmlicense = media_data['drm']['com.widevine.alpha']['licenseServerUrl']
+            common.plugin.log("media #{0} drm license: {1}".format(mid,media_drmlicense),xbmc.LOGINFO)
 
     if media_url:
 
