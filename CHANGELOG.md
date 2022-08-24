@@ -1,5 +1,9 @@
 # Changelog
 
+## v3.3.1
+Released 24 August 2022
+* Implementation of inputstreamhelper for Redbee streams (by david63236)
+
 ## v3.3.0
 Released 16 August 2022
 * Fix issues with new stream provider "RedBee" (by Qedinux)
