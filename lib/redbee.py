@@ -119,7 +119,7 @@ def get_redbee_media_url(media_id, session_token):
     data = json.loads(response)
     
     for fmt in data['formats']:
-        if fmt['format'] == 'HLS':
-            return fmt['mediaLocator']
+        if fmt['format'] == 'DASH':
+            return fmt
     
     return ''

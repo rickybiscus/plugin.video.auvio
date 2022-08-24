@@ -19,6 +19,7 @@ import math
 import urllib.request
 import urllib.parse
 import time
+import inputstreamhelper
 
 # Add the /lib folder to sys TOUFIX TOUCHECK needed ?
 sys.path.append(xbmcvfs.translatePath(os.path.join(xbmcaddon.Addon("plugin.video.auvio").getAddonInfo("path"), "lib")))
@@ -298,6 +299,8 @@ def play_media(**params):
 
     #get media stream URL
     media_url = None
+    media_drmlicense = None
+    media_data = None
     
     # for old media using the old API
     stream_node = media.get('url_streaming')
@@ -361,7 +364,11 @@ def play_media(**params):
         redbee_jwt = redbee.get_redbee_jwt(rtbf_jwt['id_token'])
 
         # Get media URL
-        media_url = redbee.get_redbee_media_url(mid, redbee_jwt['sessionToken'])        
+        media_data = redbee.get_redbee_media_url(mid, redbee_jwt['sessionToken'])        
+        if media_data:
+            media_url = media_data['mediaLocator']
+            media_drmlicense = media_data['drm']['com.widevine.alpha']['licenseServerUrl']
+            common.plugin.log("media #{0} drm license: {1}".format(mid,media_drmlicense),xbmc.LOGINFO)
 
     if media_url:
 
@@ -369,6 +376,14 @@ def play_media(**params):
 
         #build playable item
         liz = xbmcgui.ListItem(path=media_url)
+
+        if media_drmlicense:
+            is_helper = inputstreamhelper.Helper('mpd', drm='com.widevine.alpha')
+            if is_helper.check_inputstream():
+                liz.setProperty('inputstream', is_helper.inputstream_addon)
+                liz.setProperty('inputstream.adaptive.manifest_type', 'mpd')
+                liz.setProperty('inputstream.adaptive.license_type', 'com.widevine.alpha')
+                liz.setProperty('inputstream.adaptive.license_key', media_drmlicense + '||R{SSM}|')
 
         #return playable item
         xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=liz)
