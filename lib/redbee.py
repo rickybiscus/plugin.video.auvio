@@ -120,6 +120,11 @@ def get_redbee_media_url(media_id, session_token):
     
     for fmt in data['formats']:
         if fmt['format'] == 'DASH':
+            if "drm" in fmt:
+                return fmt
+
+    for fmt in data['formats']:
+        if fmt['format'] == 'HLS':
             return fmt
-    
+
     return ''
