@@ -22,5 +22,5 @@ https://github.com/rickybiscus/plugin.video.auvio
 See the `LICENSE` file.
 
 Additional copyright notices:
-* [SimplePlugin](https://github.com/romanvm/script.module.simpleplugin) by romanvm
+* [SimplePlugin 3.0.6](https://github.com/romanvm/script.module.simpleplugin) by romanvm
 * [Python Slugify](https://github.com/un33k/python-slugify) by un33k
